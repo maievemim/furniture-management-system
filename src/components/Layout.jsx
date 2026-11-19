@@ -8,6 +8,7 @@ export default function Layout() {
         <nav className="nav">
           <NavLink to="/" end data-testid="nav-catalog">แคตตาล็อก</NavLink>
           <NavLink to="/planner" data-testid="nav-planner">จัดห้อง 3D</NavLink>
+          <NavLink to="/admin" className="nav-admin" data-testid="nav-admin">ผู้ดูแล</NavLink>
         </nav>
       </header>
       <main className="main">

@@ -77,6 +77,9 @@ test.describe('หน้าจัดห้อง 3D', () => {
     expect(Math.abs(chair.x)).toBeLessThanOrEqual(1.5 - halfW + 1e-6)
     expect(Math.abs(chair.z)).toBeLessThanOrEqual(1.5 - halfD + 1e-6)
     expect(Math.abs(chair.x) + Math.abs(chair.z)).toBeGreaterThan(0) // ลากได้จริง
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
+    expect(overflow).toBe(false) // ไม่มี scroll แนวนอน (จอ 360px)
   })
 
   test('ลิงก์ห้องที่ไม่มีอยู่ แสดงข้อความภาษาไทย', async ({ page }) => {

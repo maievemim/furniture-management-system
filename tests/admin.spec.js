@@ -1,0 +1,112 @@
+import { test, expect } from '@playwright/test'
+import { existsSync, readFileSync } from 'node:fs'
+
+// อ่าน ADMIN_EMAIL / ADMIN_PASSWORD จาก env หรือ .env.local (ไม่ commit)
+function adminCreds() {
+  if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+    return { email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASSWORD }
+  }
+  if (!existsSync('.env.local')) return null
+  const env = Object.fromEntries(
+    readFileSync('.env.local', 'utf8')
+      .split(/\r?\n/)
+      .filter((l) => /^[A-Z_]+=/.test(l))
+      .map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1).trim()]),
+  )
+  return env.ADMIN_EMAIL && env.ADMIN_PASSWORD ? { email: env.ADMIN_EMAIL, password: env.ADMIN_PASSWORD } : null
+}
+const creds = adminCreds()
+
+async function login(page) {
+  await page.goto('/admin')
+  await page.getByTestId('login-email').fill(creds.email)
+  await page.getByTestId('login-password').fill(creds.password)
+  await page.getByTestId('login-submit').click()
+  await expect(page.getByTestId('admin-products')).toBeVisible()
+}
+
+test('คนที่ไม่ได้ล็อกอินเข้าหน้าแอดมินไม่ได้ (ถูกส่งไปหน้าล็อกอิน)', async ({ page }) => {
+  await page.goto('/admin/products')
+  await expect(page).toHaveURL(/\/admin\/login$/)
+  await expect(page.getByTestId('login-form')).toBeVisible()
+})
+
+test('รหัสผ่านผิดขึ้นข้อความภาษาไทย', async ({ page }) => {
+  test.skip(!creds, 'ไม่มี ADMIN_EMAIL/ADMIN_PASSWORD')
+  await page.goto('/admin/login')
+  await page.getByTestId('login-email').fill(creds.email)
+  await page.getByTestId('login-password').fill('wrong-password-123')
+  await page.getByTestId('login-submit').click()
+  await expect(page.getByTestId('login-error')).toHaveText('อีเมลหรือรหัสผ่านไม่ถูกต้อง')
+})
+
+test.describe('หลังล็อกอิน', () => {
+  test.skip(!creds, 'ไม่มี ADMIN_EMAIL/ADMIN_PASSWORD')
+
+  test('เห็นรายการสินค้า และอัปโหลดไฟล์ที่ไม่ใช่ .glb หรือใหญ่เกินจะขึ้นคำเตือน', async ({ page }) => {
+    await login(page)
+    expect(await page.getByTestId('admin-product-row').count()).toBeGreaterThan(0)
+
+    await page.getByTestId('add-product').click()
+    const glbInput = page.getByTestId('pf-glb')
+    await glbInput.setInputFiles({ name: 'sofa.obj', mimeType: 'text/plain', buffer: Buffer.from('not a glb') })
+    await expect(page.getByTestId('product-form')).toContainText('ไฟล์โมเดลต้องเป็นนามสกุล .glb เท่านั้น')
+
+    const big = Buffer.alloc(5 * 1024 * 1024 + 1)
+    big.write('glTF')
+    await glbInput.setInputFiles({ name: 'big.glb', mimeType: 'model/gltf-binary', buffer: big })
+    await expect(page.getByTestId('product-form')).toContainText('ไฟล์โมเดลใหญ่เกิน 5 MB')
+
+    await glbInput.setInputFiles({ name: 'fake.glb', mimeType: 'model/gltf-binary', buffer: Buffer.from('hello world') })
+    await expect(page.getByTestId('product-form')).toContainText('ไฟล์นี้ไม่ใช่ไฟล์ .glb ที่ถูกต้อง')
+
+    // ฟอร์มว่าง: ต้องเตือนทุกช่อง และไม่บันทึก
+    await page.getByTestId('pf-save').click()
+    await expect(page.getByTestId('product-form')).toContainText('กรุณากรอกชื่อสินค้า')
+  })
+
+  test('เพิ่ม แก้ไข และลบสินค้า พร้อมอัปโหลดโมเดล .glb', async ({ page }) => {
+    await login(page)
+    const sku = `T-${Date.now().toString(36).toUpperCase()}`
+    await page.getByTestId('add-product').click()
+    await page.getByTestId('pf-sku').fill(sku)
+    await page.getByTestId('pf-name').fill('สินค้าทดสอบ E2E')
+    await page.getByTestId('pf-price').fill('1234')
+    await page.getByTestId('pf-width').fill('50')
+    await page.getByTestId('pf-depth').fill('50')
+    await page.getByTestId('pf-height').fill('80')
+    await page.getByTestId('pf-glb').setInputFiles('assets/samples/ch-001.glb')
+    await page.getByTestId('pf-image').setInputFiles('assets/samples/ch-001.webp')
+    await page.getByTestId('pf-save').click()
+    await expect(page.getByTestId('admin-notice')).toHaveText('เพิ่มสินค้าแล้ว')
+    const row = page.getByTestId('admin-product-row').filter({ hasText: sku })
+    await expect(row).toContainText('1,234 บาท')
+
+    await row.getByRole('button', { name: 'แก้ไข' }).click()
+    await page.getByTestId('pf-price').fill('2500')
+    await page.getByTestId('pf-save').click()
+    await expect(row).toContainText('2,500 บาท')
+
+    page.once('dialog', (d) => d.accept())
+    await row.getByRole('button', { name: 'ลบ' }).click()
+    await expect(page.getByTestId('admin-notice')).toHaveText(`ลบ ${sku} แล้ว`)
+    await expect(row).toHaveCount(0)
+  })
+
+  test('หน้ารายงานแสดงสถิติ กราฟ และตาราง', async ({ page }) => {
+    await login(page)
+    await page.getByTestId('admin-nav-report').click()
+    await expect(page.getByTestId('stat-rooms')).toBeVisible()
+    await expect(page.getByTestId('popularity-table')).toBeVisible()
+  })
+})
+
+test('แก้ไขสินค้าผ่าน API โดยไม่ล็อกอินไม่ได้', async ({ request }) => {
+  const env = existsSync('.env.local')
+    ? Object.fromEntries(readFileSync('.env.local', 'utf8').split(/\r?\n/).filter((l) => l.includes('=')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1).trim()]))
+    : process.env
+  test.skip(!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_ANON_KEY, 'ไม่มีค่า Supabase')
+  const headers = { apikey: env.VITE_SUPABASE_ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' }
+  const res = await request.patch(`${env.VITE_SUPABASE_URL}/rest/v1/products?sku=eq.CH-001`, { headers, data: { price: 1 } })
+  expect([401, 403]).toContain(res.status())
+})

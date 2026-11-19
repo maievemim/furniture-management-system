@@ -6,7 +6,8 @@ const baseURL = process.env.BASE_URL || 'http://localhost:4173'
 
 export default defineConfig({
   testDir: './tests',
-  timeout: 30_000,
+  timeout: 45_000,
+  expect: { timeout: 10_000 }, // หน้า 3D โหลดไลบรารีหนัก บางครั้งเกิน 5 วินาที
   use: { baseURL, locale: 'th-TH' },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
