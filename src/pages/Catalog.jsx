@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase, isSupabaseConfigured, publicModelUrl } from '../lib/supabase.js'
 import { formatBaht, formatDimensions } from '../lib/format.js'
+import ModelViewerDialog from '../components/ModelViewerDialog.jsx'
 
 export default function Catalog() {
   const [products, setProducts] = useState([])
+  const [viewing, setViewing] = useState(null) // สินค้าที่เปิดดูแบบ 3D
   const [status, setStatus] = useState('loading') // loading | ready | error
   const [errorMessage, setErrorMessage] = useState('')
   const [query, setQuery] = useState('')
@@ -89,11 +91,23 @@ export default function Catalog() {
                 <h2 className="name" data-testid="product-name">{p.name}</h2>
                 <p className="dims">ขนาด (ก×ล×ส) {formatDimensions(p)}</p>
                 <p className="price" data-testid="product-price">{formatBaht(p.price)}</p>
+                {p.model_path && (
+                  <button
+                    type="button"
+                    className="btn btn-block"
+                    onClick={() => setViewing(p)}
+                    data-testid="view-3d"
+                  >
+                    ดูแบบ 3D
+                  </button>
+                )}
               </div>
             </li>
           ))}
         </ul>
       )}
+
+      {viewing && <ModelViewerDialog product={viewing} onClose={() => setViewing(null)} />}
     </section>
   )
 }
