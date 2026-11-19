@@ -25,8 +25,10 @@ npx playwright test
 
 ## 3. GitHub
 1. สร้าง repository (Private ได้) แล้ว push branch `main` และ `staging`
-2. Settings → Branches → เพิ่ม rule ให้ `main` และ `staging`: Require a pull request + 1 approval
-3. Settings → Secrets and variables → Actions → เพิ่ม `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+2. เปิดหน้า **repo** (ไม่ใช่ Settings ของบัญชีที่มุมขวาบน) → แท็บ **Settings** ของ repo → **Branches** → **Add classic branch protection rule**
+   ทำ 2 ครั้ง: pattern `main` และ `staging` ติ๊ก *Require a pull request before merging* + approvals = 1
+   (ต้องล็อกอินด้วยบัญชีเจ้าของ repo)
+3. แท็บ **Settings** ของ repo → **Secrets and variables → Actions** → เพิ่ม `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 
 ## 4. Vercel
 1. Add New → Project → import repo จาก GitHub (Framework: Vite)
