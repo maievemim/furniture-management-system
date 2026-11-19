@@ -38,3 +38,18 @@ test('รีเฟรชหน้าที่ไม่ใช่หน้าแ�
   await page.goto('/planner')
   await expect(page.getByRole('heading', { name: 'จัดห้อง 3D' })).toBeVisible()
 })
+
+test('กดดูแบบ 3D แล้วโหลดโมเดล .glb ได้ และตั้ง AR เป็นขนาดคงที่', async ({ page }) => {
+  test.skip(!hasBackend, 'ยังไม่ได้ตั้งค่า Supabase')
+  await page.goto('/')
+  await page.getByTestId('view-3d').first().click()
+  const dialog = page.getByTestId('model-dialog')
+  await expect(dialog).toBeVisible()
+  const viewer = dialog.getByTestId('model-viewer')
+  // React ตั้ง src เป็น property ของ custom element ไม่ใช่ attribute
+  expect(await viewer.evaluate((el) => el.src)).toMatch(/\.glb$/)
+  await expect(viewer).toHaveAttribute('ar-scale', 'fixed')
+  await expect(viewer).toHaveAttribute('data-status', 'ready', { timeout: 20_000 })
+  await dialog.getByRole('button', { name: 'ปิด' }).click()
+  await expect(dialog).toBeHidden()
+})
