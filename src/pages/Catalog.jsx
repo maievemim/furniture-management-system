@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { supabase, isSupabaseConfigured } from '../lib/supabase.js'
+import { supabase, isSupabaseConfigured, publicModelUrl } from '../lib/supabase.js'
 import { formatBaht, formatDimensions } from '../lib/format.js'
 
 export default function Catalog() {
@@ -79,7 +79,7 @@ export default function Catalog() {
             <li key={p.id} className="card" data-testid="product-card">
               <div className="thumb">
                 {p.thumbnail_url ? (
-                  <img src={p.thumbnail_url} alt={p.name} loading="lazy" />
+                  <img src={publicModelUrl(p.thumbnail_url)} alt={p.name} loading="lazy" />
                 ) : (
                   <span className="muted">ไม่มีรูป</span>
                 )}

@@ -8,5 +8,6 @@ export function formatBaht(value) {
 // ขนาด ก×ล×ส ซม. เช่น "200 × 85 × 80 ซม."
 export function formatDimensions({ width_cm, depth_cm, height_cm }) {
   const n = (v) => bahtFormatter.format(Number(v))
-  return `${n(width_cm)} × ${n(depth_cm)} × ${n(height_cm)} ซม.`
+  // ใช้ non-breaking space ระหว่างตัวเลขกับหน่วย ไม่ให้ "ซม." ตกบรรทัดเดี่ยว
+  return `${n(width_cm)} × ${n(depth_cm)} × ${n(height_cm)} ซม.`
 }
