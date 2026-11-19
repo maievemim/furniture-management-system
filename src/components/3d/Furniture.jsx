@@ -1,0 +1,83 @@
+import { useMemo, useRef } from 'react'
+import * as THREE from 'three'
+import { useGLTF } from '@react-three/drei'
+import { publicModelUrl } from '../../lib/supabase.js'
+import { useRoomStore } from '../../store/roomStore.js'
+
+const FLOOR = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
+const hit = new THREE.Vector3()
+
+// โหลด GLB แล้วบังคับขนาดให้ตรง width/depth/height (ซม.) ในฐานข้อมูล
+// ผู้ใช้ย่อ/ขยายไม่ได้ ทำได้แค่ลากบนพื้น (X/Z) และหมุนทีละ 90°
+export default function Furniture({ item, product, selected, readOnly = false }) {
+  const { scene } = useGLTF(publicModelUrl(product.model_path))
+  const moveItem = useRoomStore((s) => s.moveItem)
+  const commitItem = useRoomStore((s) => s.commitItem)
+  const select = useRoomStore((s) => s.select)
+  const setDragging = useRoomStore((s) => s.setDragging)
+  const dragOffset = useRef(null)
+
+  const { model, scale, offset } = useMemo(() => {
+    const model = scene.clone(true)
+    model.traverse((o) => {
+      if (o.isMesh) {
+        o.castShadow = true
+        o.receiveShadow = true
+      }
+    })
+    const box = new THREE.Box3().setFromObject(model)
+    const size = box.getSize(new THREE.Vector3())
+    const center = box.getCenter(new THREE.Vector3())
+    const target = new THREE.Vector3(product.width_cm / 100, product.height_cm / 100, product.depth_cm / 100)
+    return {
+      model,
+      scale: [target.x / (size.x || 1), target.y / (size.y || 1), target.z / (size.z || 1)],
+      // วางกึ่งกลางฐานไว้ที่จุดกำเนิด และให้ก้นโมเดลแตะพื้นพอดี
+      offset: [-center.x, -box.min.y, -center.z],
+    }
+  }, [scene, product.width_cm, product.height_cm, product.depth_cm])
+
+  const handlers = readOnly
+    ? {}
+    : {
+        onPointerDown: (e) => {
+          e.stopPropagation()
+          select(item.uid)
+          if (!e.ray.intersectPlane(FLOOR, hit)) return
+          dragOffset.current = { dx: item.x - hit.x, dz: item.z - hit.z }
+          e.target.setPointerCapture(e.pointerId)
+          setDragging(true)
+        },
+        onPointerMove: (e) => {
+          if (!dragOffset.current) return
+          e.stopPropagation()
+          if (!e.ray.intersectPlane(FLOOR, hit)) return
+          moveItem(item.uid, hit.x + dragOffset.current.dx, hit.z + dragOffset.current.dz)
+        },
+        onPointerUp: (e) => {
+          if (!dragOffset.current) return
+          e.stopPropagation()
+          dragOffset.current = null
+          e.target.releasePointerCapture?.(e.pointerId)
+          setDragging(false)
+          commitItem(item.uid) // clamp ตอนปล่อยเมาส์
+        },
+      }
+
+  const w = product.width_cm / 100
+  const d = product.depth_cm / 100
+
+  return (
+    <group position={[item.x, 0, item.z]} rotation-y={THREE.MathUtils.degToRad(item.rotationY)} {...handlers}>
+      <group scale={scale}>
+        <primitive object={model} position={offset} />
+      </group>
+      {selected && (
+        <mesh rotation-x={-Math.PI / 2} position-y={0.004} raycast={() => null}>
+          <planeGeometry args={[w + 0.06, d + 0.06]} />
+          <meshBasicMaterial color="#2f7de1" transparent opacity={0.35} depthWrite={false} />
+        </mesh>
+      )}
+    </group>
+  )
+}

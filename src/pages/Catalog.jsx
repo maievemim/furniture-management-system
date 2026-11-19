@@ -1,9 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase, isSupabaseConfigured, publicModelUrl } from '../lib/supabase.js'
 import { formatBaht, formatDimensions } from '../lib/format.js'
+import { useNavigate } from 'react-router-dom'
 import ModelViewerDialog from '../components/ModelViewerDialog.jsx'
+import { useRoomStore } from '../store/roomStore.js'
 
 export default function Catalog() {
+  const navigate = useNavigate()
+  const setStoreProducts = useRoomStore((s) => s.setProducts)
+  const addItem = useRoomStore((s) => s.addItem)
+
+  function placeInRoom(product) {
+    setStoreProducts([product])
+    addItem(product.id)
+    navigate('/planner')
+  }
+
   const [products, setProducts] = useState([])
   const [viewing, setViewing] = useState(null) // สินค้าที่เปิดดูแบบ 3D
   const [status, setStatus] = useState('loading') // loading | ready | error
@@ -92,14 +104,14 @@ export default function Catalog() {
                 <p className="dims">ขนาด (ก×ล×ส) {formatDimensions(p)}</p>
                 <p className="price" data-testid="product-price">{formatBaht(p.price)}</p>
                 {p.model_path && (
-                  <button
-                    type="button"
-                    className="btn btn-block"
-                    onClick={() => setViewing(p)}
-                    data-testid="view-3d"
-                  >
-                    ดูแบบ 3D
-                  </button>
+                  <div className="card-actions">
+                    <button type="button" className="btn btn-outline" onClick={() => setViewing(p)} data-testid="view-3d">
+                      ดู 3D / AR
+                    </button>
+                    <button type="button" className="btn" onClick={() => placeInRoom(p)} data-testid="place-in-room">
+                      วางในห้อง
+                    </button>
+                  </div>
                 )}
               </div>
             </li>
