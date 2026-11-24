@@ -4,12 +4,14 @@ import { fetchProducts } from '../../lib/products.js'
 import { removeFromModels } from '../../lib/uploads.js'
 import { formatBaht, formatDimensions } from '../../lib/format.js'
 import ProductForm from './ProductForm.jsx'
+import AiIndexPanel from './AiIndexPanel.jsx'
 
 export default function Products() {
   const [products, setProducts] = useState([])
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
   const [editing, setEditing] = useState(undefined) // undefined = ปิดฟอร์ม, null = เพิ่มใหม่, object = แก้ไข
 
   const load = useCallback(async () => {
@@ -17,6 +19,7 @@ export default function Products() {
     try {
       setProducts(await fetchProducts())
       setStatus('ready')
+      setRefreshKey((k) => k + 1)
     } catch (err) {
       setError(err.message)
       setStatus('error')
@@ -68,6 +71,7 @@ export default function Products() {
       )}
 
       {notice && <p className="notice" role="status" data-testid="admin-notice">{notice}</p>}
+      <AiIndexPanel refreshKey={refreshKey} />
       {error && <div className="alert" role="alert" data-testid="admin-error">{error}</div>}
       {status === 'loading' && <p className="muted">กำลังโหลด...</p>}
 
@@ -95,7 +99,9 @@ export default function Products() {
                   <td>{p.name}</td>
                   <td>{formatDimensions(p)}</td>
                   <td className="num">{formatBaht(p.price)}</td>
-                  <td>{p.model_path ? '✓' : <span className="form-error">ไม่มี</span>}</td>
+                  <td data-testid="admin-model-status">
+                    {p.model_path ? <span className="badge badge-ok">มีโมเดล</span> : <span className="badge">ไม่มี (แสดงเป็นกล่อง)</span>}
+                  </td>
                   <td>
                     <div className="btn-row">
                       <button type="button" className="btn btn-sm" onClick={() => { setNotice(''); setEditing(p) }}>แก้ไข</button>

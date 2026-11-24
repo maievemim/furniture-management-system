@@ -11,7 +11,7 @@ test.describe('หน้าจัดห้อง 3D', () => {
   test.skip(!hasBackend, 'ยังไม่ได้ตั้งค่า Supabase')
 
   test('Smoke: แคตตาล็อก → สร้างห้อง → วาง 1 ชิ้น → ราคารวมถูก → บันทึก → เปิดลิงก์แชร์ได้ห้องเดิม', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/catalog')
     const firstCard = page.getByTestId('product-card').first()
     const price = bahtToNumber(await firstCard.getByTestId('product-price').textContent())
 
@@ -53,6 +53,18 @@ test.describe('หน้าจัดห้อง 3D', () => {
     await page.getByTestId('room-apply').click()
 
     await page.getByTestId('add-CH-001').click()
+
+    // เครื่องมือช่วยประเมินขนาด: พื้นที่ห้อง และระยะห่างจากผนัง (ซ้าย + ขวา + กว้างเก้าอี้ = กว้างห้อง)
+    await expect(page.getByTestId('room-area')).toHaveText('9 ตร.ม.')
+    await expect(page.getByTestId('overlap-ok')).toBeVisible()
+    const cm = async (id) => {
+      const t = await page.getByTestId(id).textContent()
+      if (t === 'ชิดผนัง') return 0
+      const n = parseFloat(t.match(/[\d.]+/)[0])
+      return t.endsWith('ซม.') ? n : n * 100
+    }
+    expect(Math.abs((await cm('gap-left')) + (await cm('gap-right')) + 43 - 300)).toBeLessThanOrEqual(1)
+
     await page.getByTestId('add-CH-001').click()
     await expect(page.getByTestId('bom-qty')).toHaveText('2')
     expect(bahtToNumber(await page.getByTestId('bom-total').textContent())).toBe(1290 * 2)
@@ -66,17 +78,22 @@ test.describe('หน้าจัดห้อง 3D', () => {
     const box = await page.getByTestId('room-scene').boundingBox()
     const cx = box.x + box.width / 2
     const cy = box.y + box.height / 2
-    await page.mouse.move(cx, cy)
-    await page.mouse.down()
-    for (let i = 1; i <= 10; i++) await page.mouse.move(cx + (box.width / 2 - 5) * (i / 10), cy, { steps: 2 })
-    await page.mouse.up()
+    // โมเดลอาจยังไม่ขึ้นจอทันทีตอนเครื่องทำงานหนัก (รันหลายเทสพร้อมกัน): ลองลากซ้ำจนเก้าอี้ขยับจริง
+    // ถ้าครั้งแรกลากไม่โดน เก้าอี้ยังอยู่กลางห้อง จึงลากจากกลางจอซ้ำได้
+    await expect(async () => {
+      await page.mouse.move(cx, cy)
+      await page.mouse.down()
+      for (let i = 1; i <= 10; i++) await page.mouse.move(cx + (box.width / 2 - 5) * (i / 10), cy, { steps: 2 })
+      await page.mouse.up()
+      const [moved] = await items(page)
+      expect(Math.abs(moved.x) + Math.abs(moved.z)).toBeGreaterThan(0) // ลากได้จริง
+    }).toPass({ timeout: 20_000 })
 
     const [chair] = await items(page)
     const halfW = 0.43 / 2
     const halfD = 0.58 / 2
     expect(Math.abs(chair.x)).toBeLessThanOrEqual(1.5 - halfW + 1e-6)
     expect(Math.abs(chair.z)).toBeLessThanOrEqual(1.5 - halfD + 1e-6)
-    expect(Math.abs(chair.x) + Math.abs(chair.z)).toBeGreaterThan(0) // ลากได้จริง
 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
     expect(overflow).toBe(false) // ไม่มี scroll แนวนอน (จอ 360px)

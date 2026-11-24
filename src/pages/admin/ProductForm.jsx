@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { supabase } from '../../lib/supabase.js'
 import { removeFromModels, uploadToModels, validateGlb, validateImage } from '../../lib/uploads.js'
+import { dimsReady, initialTemplateValue } from '../../lib/templateCatalog.js'
+
+// ตัวสร้างโมเดลจากแม่แบบใช้ไลบรารี 3D หนัก โหลดเฉพาะเมื่อเลือกโหมดนี้
+const TemplateModelBuilder = lazy(() => import('../../components/TemplateModelBuilder.jsx'))
 
 const EMPTY = { sku: '', name: '', price: '', width_cm: '', depth_cm: '', height_cm: '' }
 
@@ -12,6 +16,10 @@ export default function ProductForm({ product, onSaved, onCancel }) {
   )
   const [glb, setGlb] = useState(null)
   const [image, setImage] = useState(null)
+  const [dropModel, setDropModel] = useState(false) // แก้ไข: ลบโมเดลเดิมออก (สินค้าจะแสดงเป็นกล่อง)
+  const [modelSource, setModelSource] = useState('file') // file = อัปโหลด .glb · template = สร้างจากแม่แบบ
+  const [tpl, setTpl] = useState(() => initialTemplateValue())
+  const [savingStep, setSavingStep] = useState('')
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
@@ -44,7 +52,8 @@ export default function ProductForm({ product, onSaved, onCancel }) {
       const v = Number(form[k])
       if (!Number.isFinite(v) || v <= 0 || v > 1000) e[k] = 'ต้องอยู่ระหว่าง 0.1–1000 ซม.'
     }
-    if (isNew && !glb) e.glb = errors.glb || 'กรุณาเลือกไฟล์โมเดล .glb'
+    // ไฟล์ .glb ไม่บังคับ สินค้าที่ไม่มีโมเดลจะแสดงเป็นกล่องขนาดจริงในห้อง 3D
+    if (modelSource === 'file' && errors.glb) e.glb = errors.glb
     return e
   }
 
@@ -66,8 +75,25 @@ export default function ProductForm({ product, onSaved, onCancel }) {
         depth_cm: Number(form.depth_cm),
         height_cm: Number(form.height_cm),
       }
-      if (glb) uploaded.push((row.model_path = await uploadToModels('glb', sku, glb)))
-      if (image) uploaded.push((row.thumbnail_url = await uploadToModels('thumbs', sku, image)))
+      let modelFile = modelSource === 'file' ? glb : null
+      let imageFile = image
+      if (modelSource === 'template') {
+        // สร้าง .glb และรูปสินค้าจากแม่แบบในเบราว์เซอร์ แล้วอัปโหลดแบบเดียวกับไฟล์ที่เลือกเอง
+        setSavingStep('กำลังสร้างโมเดล 3D...')
+        const { createTemplateAssets } = await import('../../lib/modelTemplates.js')
+        const assets = await createTemplateAssets(tpl, row, sku.toLowerCase())
+        const err = await validateGlb(assets.glb)
+        if (err) throw new Error(`สร้างโมเดลไม่สำเร็จ: ${err}`)
+        modelFile = assets.glb
+        if (!imageFile) imageFile = assets.thumbnail // ไม่ได้เลือกรูปเอง → ใช้ภาพจากโมเดล
+      }
+      setSavingStep('กำลังอัปโหลด...')
+      if (modelFile) uploaded.push((row.model_path = await uploadToModels('glb', sku, modelFile)))
+      else if (!isNew && dropModel) row.model_path = null
+      if (imageFile) {
+        uploaded.push((row.thumbnail_url = await uploadToModels('thumbs', sku, imageFile)))
+        row.embedding = null // รูปเปลี่ยน: ต้องสร้างข้อมูล AI ค้นหาด้วยรูปใหม่
+      }
 
       const query = isNew
         ? supabase.from('products').insert(row)
@@ -82,15 +108,17 @@ export default function ProductForm({ product, onSaved, onCancel }) {
       // ลบไฟล์เก่าที่ถูกแทนที่
       if (!isNew) {
         await removeFromModels([
-          row.model_path && product.model_path !== row.model_path ? product.model_path : null,
+          'model_path' in row && product.model_path !== row.model_path ? product.model_path : null,
           row.thumbnail_url && product.thumbnail_url !== row.thumbnail_url ? product.thumbnail_url : null,
         ])
       }
       onSaved()
     } catch (err) {
-      setFormError(err.message)
+      console.error(err)
+      setFormError(err.message || 'บันทึกสินค้าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง')
     } finally {
       setSaving(false)
+      setSavingStep('')
     }
   }
 
@@ -116,18 +144,68 @@ export default function ProductForm({ product, onSaved, onCancel }) {
         <Field label="สูง (ซม.)" error={errors.height_cm}>
           <input type="number" inputMode="decimal" step="0.1" value={form.height_cm} onChange={set('height_cm')} data-testid="pf-height" />
         </Field>
-        <Field label={`ไฟล์โมเดล .glb (ไม่เกิน 5 MB)${isNew ? '' : ' — เว้นว่างถ้าไม่เปลี่ยน'}`} error={errors.glb} wide>
-          <input type="file" accept=".glb,model/gltf-binary" onChange={pickGlb} data-testid="pf-glb" />
-        </Field>
+        <div className="field field-wide">
+          <span>โมเดล 3D</span>
+          <div className="choices" role="radiogroup" aria-label="ที่มาของโมเดล 3D">
+            <label className={`chip${modelSource === 'file' ? ' is-on' : ''}`}>
+              <input type="radio" name="model-source" checked={modelSource === 'file'} onChange={() => setModelSource('file')} data-testid="pf-source-file" />
+              อัปโหลดไฟล์ .glb
+            </label>
+            <label className={`chip${modelSource === 'template' ? ' is-on' : ''}`}>
+              <input type="radio" name="model-source" checked={modelSource === 'template'} onChange={() => setModelSource('template')} data-testid="pf-source-template" />
+              สร้างจากแม่แบบ
+            </label>
+          </div>
+        </div>
+        {modelSource === 'file' && (
+          <Field
+            label={`ไฟล์โมเดล .glb (ไม่บังคับ, ไม่เกิน 5 MB)${isNew || !product.model_path ? '' : ' — เว้นว่างถ้าไม่เปลี่ยน'}`}
+            error={errors.glb}
+            wide
+          >
+            <input type="file" accept=".glb,model/gltf-binary" onChange={pickGlb} disabled={dropModel} data-testid="pf-glb" />
+          </Field>
+        )}
+        {modelSource === 'template' && (
+          <div className="field-full">
+            <Suspense fallback={<p className="muted">กำลังโหลด...</p>}>
+              <TemplateModelBuilder
+                dims={form}
+                value={tpl}
+                onChange={setTpl}
+                onUseSample={(d) => setForm((f) => ({ ...f, width_cm: String(d.width_cm), depth_cm: String(d.depth_cm), height_cm: String(d.height_cm) }))}
+              />
+            </Suspense>
+            <p className="muted small">
+              {!isNew && product.model_path ? 'โมเดลเดิมจะถูกแทนที่ด้วยโมเดลจากแม่แบบ · ' : ''}
+              ถ้าไม่เลือกรูปสินค้า ระบบจะใช้ภาพจากโมเดลนี้เป็นรูปสินค้าให้อัตโนมัติ
+              {!dimsReady(form) && ' · ต้องกรอกขนาดก่อนบันทึก'}
+            </p>
+          </div>
+        )}
+        {modelSource === 'file' && !isNew && product.model_path && !glb && (
+          <label className="check-inline field-wide">
+            <input
+              type="checkbox"
+              checked={dropModel}
+              onChange={(e) => setDropModel(e.target.checked)}
+              data-testid="pf-drop-model"
+            />
+            ลบโมเดล 3D เดิมออก (สินค้าจะแสดงเป็นกล่องขนาดจริง)
+          </label>
+        )}
         <Field label={`รูปสินค้า .jpg/.png/.webp (ไม่เกิน 2 MB)${isNew ? '' : ' — เว้นว่างถ้าไม่เปลี่ยน'}`} error={errors.image} wide>
           <input type="file" accept="image/jpeg,image/png,image/webp" onChange={pickImage} data-testid="pf-image" />
         </Field>
       </div>
-      <p className="muted small">ขนาดต้องตรงกับสินค้าจริง ระบบจะปรับโมเดลให้มีขนาดเท่านี้เสมอ</p>
+      <p className="muted small">
+        ขนาดต้องตรงกับสินค้าจริง ระบบจะปรับโมเดลให้มีขนาดเท่านี้เสมอ ·
+        ถ้ายังไม่มีไฟล์ .glb สินค้าจะแสดงเป็นกล่องขนาดจริงในห้อง 3D และยังไม่มีปุ่มดู AR
+      </p>
       {formError && <p className="form-error" role="alert" data-testid="pf-error">{formError}</p>}
       <div className="btn-row">
         <button type="submit" className="btn" disabled={saving} data-testid="pf-save">
-          {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+          {saving ? savingStep || 'กำลังบันทึก...' : 'บันทึก'}
         </button>
         <button type="button" className="btn btn-outline" onClick={onCancel} disabled={saving}>ยกเลิก</button>
       </div>

@@ -56,6 +56,56 @@ export function fitsInRoom(product, rotationY, room) {
   return w <= Number(room.width) && d <= Number(room.length) && Number(product.height_cm) / 100 <= Number(room.height)
 }
 
+// ระยะจากขอบเฟอร์นิเจอร์ถึงผนังแต่ละด้าน (เมตร) ใช้ช่วยผู้ใช้ประเมินพื้นที่ว่าง/ทางเดิน
+// ซ้าย = -X, ขวา = +X, หลัง = -Z, หน้า = +Z
+export function wallGaps(item, product, room) {
+  const { w, d } = footprint(product, item.rotationY)
+  const hw = Number(room.width) / 2
+  const hl = Number(room.length) / 2
+  const g = (v) => Math.max(0, round(v))
+  return {
+    left: g(hw + item.x - w / 2),
+    right: g(hw - item.x - w / 2),
+    back: g(hl + item.z - d / 2),
+    front: g(hl - item.z - d / 2),
+  }
+}
+
+// หาเฟอร์นิเจอร์ที่วางทับกัน (เทียบกรอบฐานหลังหมุนแล้ว ยอมให้ชิดกันพอดีได้) คืน Set ของ uid
+export function findOverlaps(items, products) {
+  const boxes = items
+    .map((it) => {
+      const p = products[it.productId]
+      if (!p) return null
+      const { w, d } = footprint(p, it.rotationY)
+      return { uid: it.uid, x: it.x, z: it.z, w, d }
+    })
+    .filter(Boolean)
+  const EPS = 0.005 // 5 มม.
+  const result = new Set()
+  for (let i = 0; i < boxes.length; i++) {
+    for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i]
+      const b = boxes[j]
+      if (Math.abs(a.x - b.x) < (a.w + b.w) / 2 - EPS && Math.abs(a.z - b.z) < (a.d + b.d) / 2 - EPS) {
+        result.add(a.uid)
+        result.add(b.uid)
+      }
+    }
+  }
+  return result
+}
+
+// พื้นที่ที่เฟอร์นิเจอร์ทั้งหมดใช้ (ตร.ม.) เทียบกับพื้นที่ห้อง
+export function floorUsage(items, products, room) {
+  const used = items.reduce((sum, it) => {
+    const p = products[it.productId]
+    return p ? sum + (Number(p.width_cm) / 100) * (Number(p.depth_cm) / 100) : sum
+  }, 0)
+  const area = Number(room.width) * Number(room.length)
+  return { used, area, percent: area > 0 ? (used / area) * 100 : 0 }
+}
+
 // ปัดเป็นมิลลิเมตร เพื่อให้ตรงกับคอลัมน์ numeric(6,3)
 function round(v) {
   return Math.round(v * 1000) / 1000

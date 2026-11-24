@@ -114,3 +114,52 @@ create policy "models_read_all"     on storage.objects for select using (bucket_
 create policy "models_write_admin"  on storage.objects for insert to authenticated with check (bucket_id = 'models');
 create policy "models_update_admin" on storage.objects for update to authenticated using (bucket_id = 'models');
 create policy "models_delete_admin" on storage.objects for delete to authenticated using (bucket_id = 'models');
+
+-- ---------- survey_responses : แบบประเมินความพึงพอใจ (วัตถุประสงค์ข้อ 2.3) ----------
+-- ไม่เก็บชื่อหรือข้อมูลติดต่อ scores = คะแนน 1–5 เรียงตามข้อใน src/lib/survey.js (12 ข้อ)
+create table if not exists public.survey_responses (
+  id         bigint generated always as identity primary key,
+  gender     text not null check (gender in ('ชาย', 'หญิง', 'ไม่ระบุ')),
+  age_range  text not null check (age_range in ('ต่ำกว่า 20 ปี', '20–29 ปี', '30–39 ปี', '40–49 ปี', '50 ปีขึ้นไป')),
+  device     text not null check (device in ('มือถือ', 'แท็บเล็ต', 'คอมพิวเตอร์')),
+  scores     smallint[] not null
+             check (array_length(scores, 1) = 12 and 1 <= all(scores) and 5 >= all(scores)),
+  comment    text check (char_length(comment) <= 1000),
+  created_at timestamptz not null default now()
+);
+
+grant insert on public.survey_responses to anon, authenticated;
+grant select on public.survey_responses to authenticated;
+grant usage, select on all sequences in schema public to anon, authenticated;
+
+alter table public.survey_responses enable row level security;
+
+-- ทุกคนส่งแบบประเมินได้ แต่เฉพาะแอดมิน (ล็อกอิน) อ่านผลได้
+drop policy if exists "survey_insert_all"  on public.survey_responses;
+drop policy if exists "survey_read_admin"  on public.survey_responses;
+create policy "survey_insert_all" on public.survey_responses for insert with check (true);
+create policy "survey_read_admin" on public.survey_responses for select to authenticated using (true);
+
+-- ---------- expert_reviews : แบบประเมินประสิทธิภาพของระบบโดยผู้เชี่ยวชาญ (วัตถุประสงค์ข้อ 2.1) ----------
+-- scores = คะแนน 1–5 เรียงตามข้อใน EXPERT ของ src/lib/survey.js (19 ข้อ) ชื่อ/ตำแหน่งไม่บังคับ
+create table if not exists public.expert_reviews (
+  id            bigint generated always as identity primary key,
+  reviewer_name text check (char_length(reviewer_name) <= 100),
+  position      text check (char_length(position) <= 150),
+  scores        smallint[] not null
+                check (array_length(scores, 1) = 19 and 1 <= all(scores) and 5 >= all(scores)),
+  comment       text check (char_length(comment) <= 2000),
+  created_at    timestamptz not null default now()
+);
+
+grant insert on public.expert_reviews to anon, authenticated;
+grant select on public.expert_reviews to authenticated;
+grant usage, select on all sequences in schema public to anon, authenticated;
+
+alter table public.expert_reviews enable row level security;
+
+-- ผู้เชี่ยวชาญส่งได้โดยไม่ต้องล็อกอิน แต่เฉพาะแอดมินอ่านผลได้
+drop policy if exists "expert_insert_all" on public.expert_reviews;
+drop policy if exists "expert_read_admin" on public.expert_reviews;
+create policy "expert_insert_all" on public.expert_reviews for insert with check (true);
+create policy "expert_read_admin" on public.expert_reviews for select to authenticated using (true);

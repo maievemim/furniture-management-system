@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ระบบการจัดการการวางเฟอร์นิเจอร์เสมือนจริง · README</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Noto+Serif+Thai:wght@500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #f4efe8; --surface: #fffdf9; --text: #2b2520; --muted: #6f655b; --border: #e6ddd1;
+  --accent: #94683c; --code-bg: #efe7dc; --ink: #2b2520; --ink-text: #fbf8f3; --row: #faf6f0;
+  --font-body: 'IBM Plex Sans Thai', system-ui, sans-serif;
+  --font-display: 'Noto Serif Thai', 'IBM Plex Sans Thai', serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1d1916; --surface: #262019; --text: #efe7dc; --muted: #b3a797; --border: #3a3129;
+    --accent: #d4a574; --code-bg: #302820; --ink: #efe7dc; --ink-text: #1d1916; --row: #2b241d;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1d1916; --surface: #262019; --text: #efe7dc; --muted: #b3a797; --border: #3a3129;
+  --accent: #d4a574; --code-bg: #302820; --ink: #efe7dc; --ink-text: #1d1916; --row: #2b241d;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.75 var(--font-body); -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+.layout { max-width: 1240px; margin: 0 auto; padding: 0 16px; display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 40px; }
+.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 32px 0; }
+.toc-title { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; margin: 0 0 12px; }
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: t; }
+.toc li { counter-increment: t; }
+.toc a { display: grid; grid-template-columns: 2rem 1fr; padding: 6px 10px; border-radius: 10px; color: var(--text); text-decoration: none; font-size: 1rem; line-height: 1.45; }
+.toc a::before { content: counter(t, decimal-leading-zero); color: var(--muted); font-family: var(--font-mono); }
+.toc a:hover, .toc a.active { background: var(--surface); box-shadow: 0 1px 0 var(--border); }
+.toc a.active { color: var(--accent); font-weight: 600; }
+main { padding: 32px 0 80px; min-width: 0; }
+.doc { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: clamp(20px, 4vw, 48px); }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.35; scroll-margin-top: 20px; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 600; margin: 0 0 12px; }
+h2 { font-size: clamp(1.45rem, 3vw, 1.85rem); font-weight: 600; margin: 56px 0 16px; padding-top: 24px; border-top: 1px solid var(--border); }
+h3 { font-size: 1.25rem; font-weight: 600; margin: 32px 0 10px; }
+h1 + p strong, h1 + p { color: var(--muted); }
+p, ul, ol { margin: 0 0 14px; }
+ul, ol { padding-left: 1.4rem; }
+li { margin: 4px 0; }
+li > p { margin: 0; }
+strong { font-weight: 600; }
+code { font-family: var(--font-mono); font-size: 1rem; background: var(--code-bg); padding: 1px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+pre { background: var(--ink); color: var(--ink-text); padding: 16px 18px; border-radius: 14px; overflow-x: auto; margin: 0 0 16px; }
+pre code { background: none; padding: 0; color: inherit; overflow-wrap: normal; white-space: pre; }
+blockquote { margin: 0 0 16px; padding: 12px 18px; border-left: 4px solid var(--accent); background: var(--row); border-radius: 0 12px 12px 0; }
+blockquote p { margin: 0; }
+.table-wrap { overflow-x: auto; margin: 0 0 18px; border: 1px solid var(--border); border-radius: 14px; }
+table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+th, td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+thead th { background: var(--row); font-weight: 600; white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:nth-child(even) td { background: var(--row); }
+.topbar { display: none; }
+.theme-btn { position: fixed; right: 16px; bottom: 16px; font: 1rem var(--font-body); padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; box-shadow: 0 4px 14px rgb(0 0 0 / .12); }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 0; }
+  .toc { position: static; max-height: none; padding: 16px 0 0; }
+  .toc details { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 10px 14px; }
+  .toc summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; }
+  .toc-title { display: none; }
+  main { padding-top: 16px; }
+}
+@media (min-width: 901px) { .toc summary { display: none; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="สารบัญ">
+    <details open>
+      <summary>สารบัญ</summary>
+      <p class="toc-title">สารบัญ</p>
+      <ol>
+<li><a href="#วัตถุประสงค์">วัตถุประสงค์</a></li>
+<li><a href="#ฟีเจอร์">ฟีเจอร์</a></li>
+<li><a href="#เทคโนโลยีที่ใช้">เทคโนโลยีที่ใช้</a></li>
+<li><a href="#เทคนิคและข้อจำกัดของแต่ละฟีเจอร์">เทคนิคและข้อจำกัดของแต่ละฟีเจอร์</a></li>
+<li><a href="#การติดตั้ง">การติดตั้ง</a></li>
+<li><a href="#คำสั่งที่ใช้บ่อย">คำสั่งที่ใช้บ่อย</a></li>
+<li><a href="#การนำขึ้นออนไลน์-vercel">การนำขึ้นออนไลน์ (Vercel)</a></li>
+<li><a href="#โครงสร้างโปรเจกต์">โครงสร้างโปรเจกต์</a></li>
+<li><a href="#ฐานข้อมูล">ฐานข้อมูล</a></li>
+<li><a href="#การทดสอบ">การทดสอบ</a></li>
+<li><a href="#ปัญหาที่พบบ่อย">ปัญหาที่พบบ่อย</a></li>
+<li><a href="#ผู้จัดทำ">ผู้จัดทำ</a></li>
+      </ol>
+    </details>
+  </nav>
+  <main>
+    <article class="doc">
+<h1 id="ระบบการจัดการการวางเฟอร์นิเจอร์เสมือนจริงผ่านเว็บไซต์">ระบบการจัดการการวางเฟอร์นิเจอร์เสมือนจริงผ่านเว็บไซต์</h1>
+<p><strong>Web-based Virtual Furniture Placement Management System</strong></p>
+<p>โครงงานระดับ ปวช.3/3 สาขาเทคโนโลยีธุรกิจดิจิทัล วิทยาลัยอาชีวศึกษานครปฐม<br />
+พัฒนาให้ <strong>บริษัท เรืองศิลป์เฟอร์นิแลนด์ จำกัด</strong></p>
+<p>ลูกค้าค้นหาสินค้าด้วยรูปภาพ (AI) สร้างห้อง 3 มิติตามขนาดจริง วางเฟอร์นิเจอร์ของร้านที่มีขนาดเท่าของจริง ดูราคารวม บันทึกและแชร์ห้อง และส่องสินค้าในห้องจริงแบบ AR ผ่านกล้องมือถือ โดยไม่ต้องติดตั้งแอป<br />
+ฝั่งผู้ดูแลจัดการสินค้า อัปโหลดโมเดล 3D ดูรายงานความนิยมสินค้า และดูผลประเมินความพึงพอใจ</p>
+
+<h2 id="วัตถุประสงค์">วัตถุประสงค์</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>ข้อ</th><th>วัตถุประสงค์</th><th>ส่วนของระบบที่ตอบ</th></tr></thead>
+<tbody>
+<tr><td>2.1</td><td>พัฒนาระบบจัดวางเฟอร์นิเจอร์เสมือนจริงผ่านเว็บไซต์ที่ใช้งานได้อย่างมีประสิทธิภาพ</td><td>ทั้งระบบ (ใช้ได้บน Chrome/Safari ทุกอุปกรณ์, E2E test อัตโนมัติ) + แบบประเมินประสิทธิภาพสำหรับผู้เชี่ยวชาญ 3 ท่าน <code>/expert</code> (19 ข้อ 4 ด้าน) และหน้าสรุปผลของแอดมิน</td></tr>
+<tr><td>2.2</td><td>ช่วยให้ผู้ใช้ประเมินขนาด สัดส่วน และจำลองการจัดวางได้ถูกต้อง</td><td>ขนาดในฉาก 3D และ AR เท่าของจริงเสมอ, ระยะห่างจากผนัง 4 ด้าน, พื้นที่ที่เฟอร์นิเจอร์ใช้, เตือนเมื่อวางทับกัน</td></tr>
+<tr><td>2.3</td><td>ประเมินความพึงพอใจของผู้ใช้งาน</td><td>หน้าแบบประเมิน <code>/survey</code> (5 ระดับ 12 ข้อ) และหน้าผลประเมินของแอดมิน (x̄, S.D., ระดับ, ส่งออก CSV)</td></tr>
+</tbody></table></div>
+<h2 id="ฟีเจอร์">ฟีเจอร์</h2>
+<h3 id="ผู้ใช้ทั่วไป-ไม่ต้องล็อกอิน">ผู้ใช้ทั่วไป (ไม่ต้องล็อกอิน)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>หน้า</th><th>ทำอะไรได้</th></tr></thead>
+<tbody>
+<tr><td><code>/</code> หน้าแรก</td><td>แนะนำระบบและ 3 ฟีเจอร์หลัก (ค้นหาด้วยรูป, จัดห้อง 3D, AR) พร้อมขั้นตอนการใช้งาน</td></tr>
+<tr><td><code>/catalog</code> สินค้า</td><td>ดูสินค้า รูป ขนาด ราคา ค้นหาด้วยชื่อหรือรหัส ดูโมเดล 3D และดูในห้องจริงแบบ AR</td></tr>
+<tr><td><code>/search</code> ค้นหาด้วยรูป</td><td>ถ่ายหรือเลือกรูปเฟอร์นิเจอร์ AI (CLIP) หาสินค้าที่คล้ายที่สุด 6 อันดับ แล้วดู AR หรือวางในห้องต่อได้ รูปของผู้ใช้ไม่ถูกอัปโหลดออกจากเครื่อง</td></tr>
+<tr><td><code>/planner</code> จัดห้อง 3D</td><td>กำหนดขนาดห้อง (กว้าง × ยาว × สูง เมตร), วางเฟอร์นิเจอร์, ลากย้ายบนพื้น, หมุนทีละ 90°, ดูระยะห่างจากผนังและพื้นที่ว่าง, สรุปราคารวม (BOM), บันทึกแล้วได้ลิงก์แชร์</td></tr>
+<tr><td><code>/room/:id</code> ห้องที่แชร์</td><td>เปิดดูห้องที่คนอื่นบันทึกไว้ และกด "แก้ไขต่อ" เพื่อบันทึกเป็นห้องใหม่</td></tr>
+<tr><td><code>/survey</code> แบบประเมิน</td><td>ตอบแบบประเมินความพึงพอใจหลังทดลองใช้ระบบ (ไม่เก็บชื่อหรือข้อมูลติดต่อ)</td></tr>
+</tbody></table></div>
+<h3 id="ผู้ดูแลระบบ-ต้องล็อกอิน">ผู้ดูแลระบบ (ต้องล็อกอิน)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>หน้า</th><th>ทำอะไรได้</th></tr></thead>
+<tbody>
+<tr><td><code>/admin/login</code></td><td>เข้าสู่ระบบด้วยอีเมลและรหัสผ่าน</td></tr>
+<tr><td><code>/admin/products</code></td><td>เพิ่ม แก้ไข ลบสินค้า อัปโหลดรูปและโมเดล <code>.glb</code> หรือ<strong>สร้างโมเดล 3D จากแม่แบบ</strong> (ตู้ ชั้นวาง โต๊ะ โต๊ะกลม เก้าอี้ โซฟา เตียง) ระบบสร้างข้อมูล AI ค้นหาด้วยรูปให้อัตโนมัติ</td></tr>
+<tr><td><code>/admin/report</code></td><td>รายงานความนิยมสินค้า (จำนวนครั้งที่ถูกวางในห้องที่บันทึก)</td></tr>
+<tr><td><code>/admin/survey</code></td><td>ผลประเมินความพึงพอใจ รายข้อ รายด้าน ภาพรวม และดาวน์โหลด CSV</td></tr>
+<tr><td><code>/admin/expert</code></td><td>ผลประเมินประสิทธิภาพโดยผู้เชี่ยวชาญ (x̄, S.D., ระดับ ดีมาก–ต้องปรับปรุง), รายชื่อผู้ประเมิน, ลิงก์ <code>/expert</code> สำหรับส่งให้ผู้เชี่ยวชาญ, CSV</td></tr>
+</tbody></table></div>
+<h3 id="สร้างโมเดล-3d-จากแม่แบบ-ไม่ต้องมีไฟล์-glb">สร้างโมเดล 3D จากแม่แบบ (ไม่ต้องมีไฟล์ .glb)</h3>
+<p>ร้านเพิ่มสินค้าที่ยังไม่มีไฟล์ 3D ได้เอง ระบบสร้างโมเดลขนาดเท่าของจริงพร้อมรูปสินค้าให้ในเบราว์เซอร์ ไม่เสียเงินและไม่ต้องใช้โปรแกรมอื่น</p>
+<p><strong>วิธีใช้</strong></p>
+<ol><li>หน้า <code>/admin</code> → กด <strong>"+ เพิ่มสินค้า"</strong> แล้วกรอกรหัส ชื่อ และราคา</li><li>ช่อง <strong>โมเดล 3D</strong> → เลือก <strong>"สร้างจากแม่แบบ"</strong></li><li>เลือกแม่แบบที่ใกล้กับสินค้าที่สุด</li><li>กรอกขนาด กว้าง × ลึก × สูง (ซม.) ตามของจริง หรือกด <strong>"ใช้ขนาดตัวอย่าง"</strong> เพื่อเริ่มจากขนาดมาตรฐาน</li><li>ปรับตัวเลือกของแม่แบบ และเลือก <strong>วัสดุหลัก</strong> กับ <strong>วัสดุรอง</strong> (ขา/โครง/มือจับ) จาก 9 สี ได้แก่ ไม้อ่อน ไม้เข้ม ขาว ดำ เทา ผ้าเบจ ผ้าเทา ผ้ากรมท่า ผ้าเขียว</li><li>ดูตัวอย่าง 3D ทางขวา (ลากเพื่อหมุน) ภาพจะเปลี่ยนตามทุกการปรับ</li><li>กด <strong>บันทึก</strong> ระบบจะทำต่อให้อัตโนมัติดังนี้<ul><li>สร้างไฟล์ <code>.glb</code> และอัปโหลด</li><li>ถ้าไม่ได้เลือกรูปสินค้า จะใช้ภาพจากโมเดลเป็นรูปสินค้า (พื้นหลังโปร่งใส)</li><li>สร้างข้อมูล AI ให้ค้นหาด้วยรูปเจอ</li></ul></li><li>สินค้าใหม่ใช้ได้ทันทีในแคตตาล็อก ห้องจัด 3D และปุ่มดู AR</li></ol>
+<p><strong>แม่แบบที่มี</strong></p>
+<div class="table-wrap"><table>
+<thead><tr><th>แม่แบบ</th><th>เหมาะกับ</th><th>ปรับได้</th><th>ขนาดตัวอย่าง (ซม.)</th></tr></thead>
+<tbody>
+<tr><td>ตู้ / ลิ้นชัก</td><td>ตู้เสื้อผ้า ตู้ลิ้นชัก ตู้วางทีวี ตู้ข้างเตียง</td><td>หน้าตู้แบบบานเปิดหรือลิ้นชัก 1–6 ช่อง, ใส่รูปถ่ายหน้าตู้ได้</td><td>80 × 45 × 120</td></tr>
+<tr><td>ชั้นวาง</td><td>ชั้นหนังสือ ชั้นโชว์ ชั้นวางของ</td><td>จำนวนชั้น 2–8, มีหรือไม่มีแผ่นหลัง</td><td>80 × 30 × 180</td></tr>
+<tr><td>โต๊ะ 4 ขา</td><td>โต๊ะกลาง โต๊ะทำงาน โต๊ะอาหาร</td><td>มีหรือไม่มีคานใต้โต๊ะ</td><td>120 × 60 × 75</td></tr>
+<tr><td>โต๊ะกลม / สตูล</td><td>โต๊ะกลม โต๊ะข้าง สตูล</td><td>ขาเสาเดี่ยวหรือ 4 ขา (กว้างกับลึกต่างกันจะเป็นวงรี)</td><td>80 × 80 × 74</td></tr>
+<tr><td>เก้าอี้</td><td>เก้าอี้ทานอาหาร เก้าอี้ทำงานแบบมีพนัก</td><td>สีเบาะและสีขา</td><td>45 × 52 × 90</td></tr>
+<tr><td>โซฟา</td><td>โซฟาทรงเหลี่ยม</td><td>จำนวนที่นั่ง 1–4</td><td>200 × 90 × 80</td></tr>
+<tr><td>เตียง</td><td>เตียงมีหัวเตียง (หัวเตียงอยู่ด้านหลัง)</td><td>สีโครงเตียงและสีผ้าห่ม</td><td>160 × 210 × 100</td></tr>
+</tbody></table></div>
+<p><strong>เคล็ดลับ</strong></p>
+<ul><li>กรอกขนาดจากของจริงเสมอ เพราะระบบใช้ตัวเลขนี้ทั้งในห้อง 3D และ AR</li><li>รูปหน้าตู้ควรถ่ายตรงๆ แล้วครอปให้เหลือเฉพาะหน้าตู้ ระบบจะยืดรูปเต็มหน้าตู้</li><li>โมเดลจากแม่แบบหน้าตาเรียบง่าย ถ้าสินค้าทรงซับซ้อน (โซฟาโค้ง เก้าอี้บุนวม) ควรใช้ไฟล์ <code>.glb</code> จากการสแกนหรือโมเดลสำเร็จรูปแทน</li><li>แก้สินค้าภายหลังแล้วเลือกแม่แบบใหม่ได้ โมเดลเดิมจะถูกแทนที่ เพราะระบบไม่ได้จำค่าที่เลือกไว้ครั้งก่อน</li></ul>
+<h3 id="กฎสำคัญ">กฎสำคัญ</h3>
+<ul><li><strong>ขนาดเท่าของจริงเสมอ</strong> ระบบอ่านขนาดจากฐานข้อมูล (ซม.) แล้วปรับโมเดลให้ตรง ผู้ใช้ย่อหรือขยายเฟอร์นิเจอร์ไม่ได้ และ AR ตั้ง <code>ar-scale=&quot;fixed&quot;</code></li><li><strong>ไม่มีไฟล์ 3D ก็สร้างโมเดลได้</strong> เลือก "สร้างจากแม่แบบ" ในฟอร์มเพิ่มสินค้า ระบบสร้างโมเดลขนาดเท่าของจริงและรูปสินค้าให้ในเบราว์เซอร์ (ไม่เสียเงิน)</li><li><strong>สินค้าที่ยังไม่มีโมเดล 3D</strong> เพิ่มได้โดยไม่ต้องอัปโหลด <code>.glb</code> ในห้อง 3D จะแสดงเป็นกล่องขนาดจริงแทน (ยังวางและคิดราคาได้) แต่จะไม่มีปุ่มดู AR จนกว่าจะอัปโหลดโมเดล</li><li>ราคารวมคำนวณจากราคาในฐานข้อมูลทุกครั้ง ไม่เก็บราคาไว้ในห้องที่บันทึก</li><li>AR แสดงทีละชิ้น ส่วนการจัดทั้งห้องทำในโหมด 3D</li></ul>
+<h2 id="เทคโนโลยีที่ใช้">เทคโนโลยีที่ใช้</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>ส่วน</th><th>เทคโนโลยี</th></tr></thead>
+<tbody>
+<tr><td>หน้าเว็บ</td><td>React 19 + Vite (JavaScript)</td></tr>
+<tr><td>3D</td><td>three, @react-three/fiber, @react-three/drei</td></tr>
+<tr><td>AR</td><td>@google/model-viewer (WebXR / Scene Viewer / Quick Look)</td></tr>
+<tr><td>State</td><td>zustand</td></tr>
+<tr><td>Routing</td><td>react-router-dom</td></tr>
+<tr><td>ฐานข้อมูล / ล็อกอิน / ไฟล์</td><td>Supabase (Postgres, Auth, Storage)</td></tr>
+<tr><td>AI ค้นหาด้วยรูป</td><td>@huggingface/transformers (CLIP <code>Xenova/clip-vit-base-patch32</code>) รันใน browser + pgvector</td></tr>
+<tr><td>กราฟ</td><td>recharts</td></tr>
+<tr><td>โฮสติ้ง</td><td>Vercel (Hobby) + GitHub</td></tr>
+<tr><td>ทดสอบ</td><td>Playwright</td></tr>
+</tbody></table></div>
+<p>ระบบไม่มี backend server ของตัวเอง หน้าเว็บคุยกับ Supabase โดยตรง และใช้ Row Level Security คุมสิทธิ์ ทุกบริการใช้แผนฟรี <strong>ค่าใช้จ่าย 0 บาท</strong></p>
+<h2 id="เทคนิคและข้อจำกัดของแต่ละฟีเจอร์">เทคนิคและข้อจำกัดของแต่ละฟีเจอร์</h2>
+<h3 id="1-แคตตาล็อกและการดูโมเดล-3d-catalog">1. แคตตาล็อกและการดูโมเดล 3D (<code>/catalog</code>)</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>โหลดรายการสินค้าจากตาราง <code>products</code> ผ่าน Supabase client ค้นหาด้วยชื่อหรือรหัสโดยกรองในเบราว์เซอร์</li><li>หน้าต่างดู 3D ใช้ <code>&lt;model-viewer&gt;</code> โหลดไลบรารีแบบ dynamic import เฉพาะตอนกดดูครั้งแรก หน้าแคตตาล็อกจึงไม่ช้า</li><li>หน้าที่ใช้ไลบรารี 3D หนักๆ (จัดห้อง, ห้องที่แชร์, แอดมิน) แยกโหลดด้วย <code>React.lazy</code></li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>ค้นหาได้แค่ชื่อและรหัสสินค้า ยังไม่มีหมวดหมู่ ตัวกรองราคา หรือการแบ่งหน้า ถ้าสินค้ามีหลายร้อยชิ้นจะโหลดช้าลง</li></ul>
+<h3 id="2-จัดห้อง-3d-ตามขนาดจริง-planner">2. จัดห้อง 3D ตามขนาดจริง (<code>/planner</code>)</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>ฉาก 3D ใช้ three.js ผ่าน <code>@react-three/fiber</code> หน่วยในฉากเป็นเมตร ฐานข้อมูลเก็บเป็นซม. แล้วหาร 100</li><li><code>Furniture.jsx</code> วัดกรอบ (bounding box) ของโมเดลด้วย <code>THREE.Box3</code> แล้วปรับ scale แต่ละแกนให้ตรงกับ กว้าง/สูง/ลึก ในฐานข้อมูล และวางก้นโมเดลให้แตะพื้นพอดี</li><li>การลาก: ยิงเส้น (raycast) จากเมาส์ไปตัดระนาบพื้น y = 0 ใช้ pointer capture และปิดการหมุนกล้อง (<code>OrbitControls</code>) ระหว่างลาก</li><li>กันหลุดนอกห้อง: บีบค่าตำแหน่ง (clamp) ทั้งระหว่างลาก ตอนปล่อยเมาส์ ตอนหมุน และตอนย่อขนาดห้อง โดยคิดกรอบฐานหลังหมุนแล้ว</li><li>ชิ้นใหม่หาที่ว่างให้อัตโนมัติ: ไล่หาจากกลางห้องออกไปทีละ 25 ซม. จนเจอจุดที่ไม่ทับชิ้นอื่น</li><li>เก็บสถานะห้องด้วย zustand เก็บเฉพาะ id สินค้าและตำแหน่ง ไม่เก็บราคา</li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>ห้องเป็นสี่เหลี่ยมผืนผ้าเท่านั้น กว้างและยาว 1–30 ม. สูง 2–6 ม. ยังไม่มีประตู หน้าต่าง เสา หรือผนังรูปทรงอิสระ (อยู่นอกขอบเขตโครงงาน)</li><li>หมุนได้ทีละ 90° และวางได้บนพื้นเท่านั้น วางของซ้อนบนโต๊ะหรือแขวนผนังไม่ได้</li><li>ย่อหรือขยายเฟอร์นิเจอร์ไม่ได้ (ตั้งใจ เพื่อให้ขนาดเท่าของจริงเสมอ)</li><li>ถ้าสัดส่วนของไฟล์โมเดลต่างจากขนาดในฐานข้อมูล หรือโมเดลหันผิดแกน โมเดลจะถูกยืดจนดูบิดเบี้ยว</li><li>เฟอร์นิเจอร์หลายชิ้นที่ใช้โมเดลละเอียดอาจทำให้มือถือรุ่นเก่ากระตุก</li></ul>
+<h3 id="3-เครื่องมือช่วยประเมินขนาด-วัตถุประสงค์-22">3. เครื่องมือช่วยประเมินขนาด (วัตถุประสงค์ 2.2)</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>ป้ายขนาด กว้าง × ลึก × สูง เหนือชิ้นที่เลือก ใช้ <code>Html</code> ของ drei</li><li>ระยะห่างจากผนัง 4 ด้าน คำนวณจากตำแหน่งและกรอบฐานหลังหมุน (<code>wallGaps</code> ใน <code>src/lib/geometry.js</code>)</li><li>เตือนเมื่อวางทับกัน ใช้การชนกันของกรอบสี่เหลี่ยมแนวแกน (AABB) ยอมให้ชิดกันพอดีได้ 5 มม. (<code>findOverlaps</code>)</li><li>พื้นที่ที่ใช้ = ผลรวมพื้นที่ฐานของทุกชิ้น เทียบกับพื้นที่ห้อง</li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>ทุกการคำนวณใช้กรอบสี่เหลี่ยมรอบชิ้น ไม่ใช่รูปทรงจริง เช่น โต๊ะกลมหรือโซฟาตัว L จะถูกนับเหมือนกล่องสี่เหลี่ยม</li><li>พื้นที่ที่ใช้ไม่หักส่วนที่วางทับกัน และไม่คิดพื้นที่ทางเดินหรือระยะเปิดประตูตู้</li></ul>
+<h3 id="4-สินค้าที่ยังไม่มีโมเดล-3d">4. สินค้าที่ยังไม่มีโมเดล 3D</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>ไฟล์ <code>.glb</code> ไม่บังคับ ถ้าไม่มี ห้อง 3D จะแสดงกล่องโปร่งแสงขนาดเท่าของจริงแทน (<code>BoxModel</code> ใน <code>Furniture.jsx</code>) ยังวาง คิดราคา และตรวจระยะได้ครบ</li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>ไม่มีปุ่มดู AR จนกว่าจะอัปโหลดโมเดล และลูกค้าเห็นแค่กล่อง ไม่เห็นหน้าตาสินค้าในห้อง 3D</li></ul>
+<h3 id="41-สร้างโมเดล-3d-จากแม่แบบ-หน้าแอดมิน">4.1 สร้างโมเดล 3D จากแม่แบบ (หน้าแอดมิน)</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>แม่แบบเฟอร์นิเจอร์พื้นฐาน 7 แบบ: ตู้/ลิ้นชัก, ชั้นวาง, โต๊ะ 4 ขา, โต๊ะกลม/สตูล, เก้าอี้, โซฟา, เตียง (<code>src/lib/modelTemplates.js</code>)</li><li>ประกอบโมเดลจากรูปทรงพื้นฐานของ three.js (กล่อง, กล่องขอบมน <code>RoundedBoxGeometry</code>, ทรงกระบอก) ตามขนาด กว้าง/ลึก/สูง ที่กรอก กรอบของโมเดลเท่ากับขนาดจริงพอดี (มี test ตรวจทุกแม่แบบ) ห้องจัด 3D จึงไม่ต้องยืดโมเดล</li><li>ปรับได้: จำนวนบาน/ลิ้นชัก, จำนวนชั้น, แผ่นหลัง, คานใต้โต๊ะ, ขาเสาเดี่ยวหรือ 4 ขา, จำนวนที่นั่งโซฟา, สีวัสดุหลักและรอง 9 แบบ (ลายไม้สร้างด้วย canvas) และใส่รูปหน้าตู้ได้</li><li>ดูตัวอย่าง 3D หมุนได้ทันทีในฟอร์ม (<code>TemplateModelBuilder.jsx</code>) ตอนบันทึก ระบบ export เป็น <code>.glb</code> ด้วย <code>GLTFExporter</code> และเรนเดอร์รูปสินค้าพื้นหลังโปร่งใส (.webp) ให้อัตโนมัติ แล้วอัปโหลดแบบเดียวกับไฟล์ที่เลือกเอง</li><li>ทำงานในเบราว์เซอร์ทั้งหมด ไม่เสียเงิน และไลบรารี 3D โหลดเฉพาะตอนเลือกโหมดนี้</li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>ได้โมเดลหน้าตาเรียบง่าย ไม่มีรายละเอียดหรือลวดลายแบบสินค้าจริง (ยกเว้นรูปหน้าตู้) ใช้แทนของทรงซับซ้อน เช่น โซฟาโค้ง เก้าอี้บุนวม หรือเตียงหัวเบาะ ได้ไม่ดี</li><li>รูปหน้าตู้ถูกยืดเต็มหน้าตู้ ต้องครอปรูปให้เหลือเฉพาะหน้าตู้ก่อน</li><li>ไม่ได้บันทึกค่าที่เลือกไว้ แก้สินค้าภายหลังต้องเลือกแม่แบบใหม่ และโมเดลเดิมจะถูกแทนที่</li></ul>
+<h3 id="5-สรุปราคารวม-bom">5. สรุปราคารวม (BOM)</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>คำนวณจากรายการในห้อง × ราคาในฐานข้อมูลทุกครั้ง (<code>computeBom</code>) จัดกลุ่มตามสินค้า แสดงราคาเป็นบาทแบบมีคอมมาด้วย <code>Intl.NumberFormat(&#x27;th-TH&#x27;)</code></li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>ไม่เก็บราคา ณ วันที่บันทึก ถ้าร้านเปลี่ยนราคา ห้องที่แชร์ไว้จะแสดงราคาใหม่</li><li>ไม่มีส่วนลด ค่าส่ง ภาษี ตะกร้า หรือการชำระเงิน (อยู่นอกขอบเขตโครงงาน)</li></ul>
+<h3 id="6-บันทึกและแชร์ห้อง-roomid">6. บันทึกและแชร์ห้อง (<code>/room/:id</code>)</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>สร้าง id แบบ UUID ในเบราว์เซอร์ (<code>crypto.randomUUID</code>) แล้วใช้เป็นลิงก์แชร์ บันทึกลงตาราง <code>rooms</code> และ <code>room_items</code></li><li>เปิดลิงก์แล้วโหลดห้องพร้อมข้อมูลสินค้าด้วย join ของ Supabase กด "แก้ไขต่อ" จะคัดลอกไปหน้าจัดห้องและบันทึกเป็นห้องใหม่</li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>ห้องที่บันทึกแล้วแก้ไขหรือลบไม่ได้ ทุกครั้งที่แก้จะได้ลิงก์ใหม่</li><li>ไม่มีระบบสมาชิกลูกค้า จึงไม่มีหน้า "ห้องของฉัน" ใครมีลิงก์ก็เปิดดูได้</li><li>ใครก็สร้างห้องได้โดยไม่ต้องล็อกอิน (เปิดไว้สำหรับเดโม) จึงมีโอกาสถูกสร้างข้อมูลขยะ</li></ul>
+<h3 id="7-ดูสินค้าในห้องจริงแบบ-ar">7. ดูสินค้าในห้องจริงแบบ AR</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>ใช้ <code>&lt;model-viewer&gt;</code> เลือกโหมดตามเครื่องอัตโนมัติ: WebXR หรือ Scene Viewer (Android) และ Quick Look (iPhone)</li><li>ตั้ง <code>ar-scale=&quot;fixed&quot;</code> ให้แสดงขนาดเท่าของจริงเสมอ ผู้ใช้ย่อขยายไม่ได้</li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>ต้องเปิดผ่าน HTTPS บนมือถือที่รองรับ AR (Android ที่รองรับ ARCore หรือ iPhone/iPad ที่รองรับ ARKit) ใช้กับ localhost หรือคอมพิวเตอร์ไม่ได้</li><li>แสดงได้ทีละชิ้น วางทั้งห้องใน AR ไม่ได้ (อยู่นอกขอบเขตโครงงาน)</li><li>ความแม่นของการวางขึ้นกับแสงและพื้นผิว พื้นเรียบไม่มีลวดลายหรือแสงน้อย กล้องจะจับพื้นได้ยาก</li></ul>
+<h3 id="8-ค้นหาสินค้าด้วยรูปภาพ-search">8. ค้นหาสินค้าด้วยรูปภาพ (<code>/search</code>)</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li><strong>Image Embedding:</strong> ใช้โมเดล CLIP (<code>Xenova/clip-vit-base-patch32</code> แบบ quantized q8) ผ่าน <code>@huggingface/transformers</code> รันในเบราว์เซอร์ แปลงรูปเป็นเวกเตอร์ 512 ค่า (<code>src/lib/clip.js</code>) รูปพื้นหลังโปร่งใสจะถูกวางบนพื้นขาวก่อน</li><li><strong>Vector Similarity Search:</strong> เก็บเวกเตอร์ของรูปสินค้าในคอลัมน์ <code>embedding</code> (pgvector) ฟังก์ชัน <code>match_products</code> เรียงสินค้าตาม cosine similarity แล้วคืน 6 อันดับแรก</li><li><strong>เกณฑ์ "คล้าย":</strong> คล้ายตั้งแต่ 62% และห่างจากอันดับ 1 ไม่เกิน 10% ตั้งจากผลวัดจริง (ของชิ้นเดียวกันได้ราว 72–84% ของคนละประเภทได้ราว 45–58%) ที่ไม่ผ่านเกณฑ์จะแสดงใต้หัวข้อ "สินค้าอื่นที่อาจสนใจ"</li><li>หน้าจัดการสินค้าสร้างเวกเตอร์ให้สินค้าใหม่หรือสินค้าที่เปลี่ยนรูปโดยอัตโนมัติ</li><li>รูปของลูกค้าไม่ถูกอัปโหลด ส่งไปฐานข้อมูลแค่ตัวเลข 512 ค่า ไม่มีค่าใช้จ่าย API</li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>ครั้งแรกต้องดาวน์โหลดโมเดล AI ราว 90 MB (ครั้งต่อไปใช้แคชของเบราว์เซอร์) มือถือรุ่นเก่าอาจใช้หลายวินาทีต่อรูป</li><li>เทียบจาก "รูปสินค้า 1 รูปต่อชิ้น" เท่านั้น รูปถ่ายจริงต่างจากรูปสินค้าที่เป็นภาพเรนเดอร์ ความคล้ายสูงสุดจึงมักอยู่ราว 70–85% ไม่ถึง 100%</li><li>หาได้แค่ "หน้าตาคล้าย" ไม่รู้ขนาด ยี่ห้อ หรือวัสดุ รูปที่มีเฟอร์นิเจอร์หลายชิ้นจะได้ผลไม่แม่น ยังไม่มีการครอปรูป</li><li>รองรับรูป .jpg / .png / .webp ไม่เกิน 10 MB และเกณฑ์ 62% อาจต้องปรับใหม่เมื่อมีสินค้ามากขึ้น</li></ul>
+<h3 id="9-ระบบผู้ดูแล-จัดการสินค้าและอัปโหลดไฟล์-admin">9. ระบบผู้ดูแล: จัดการสินค้าและอัปโหลดไฟล์ (<code>/admin</code>)</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>ล็อกอินด้วย Supabase Auth (อีเมลและรหัสผ่าน) หน้า <code>/admin/*</code> ส่งไปหน้าล็อกอินเมื่อยังไม่ล็อกอิน</li><li>สิทธิ์จริงคุมที่ฐานข้อมูลด้วย Row Level Security: ทุกคนอ่านสินค้าได้ แต่เขียนได้เฉพาะผู้ที่ล็อกอิน</li><li>ตรวจไฟล์ก่อนอัปโหลด: <code>.glb</code> ไม่เกิน 5 MB และ 4 ไบต์แรกต้องเป็น <code>glTF</code> ส่วนรูปต้องเป็น .jpg/.png/.webp ไม่เกิน 2 MB ตั้งชื่อไฟล์ใหม่ทุกครั้ง (กันเบราว์เซอร์แคชไฟล์เก่า) และลบไฟล์เก่าเมื่อถูกแทนที่</li><li>ลบสินค้าที่อยู่ในห้องที่ลูกค้าบันทึกไว้ไม่ได้ (foreign key <code>on delete restrict</code>)</li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>ทุกบัญชีที่ล็อกอินได้คือแอดมิน ไม่มีการแบ่งบทบาท <strong>ต้องปิดการสมัครสมาชิกเองใน Supabase</strong> (Authentication → Sign In / Providers → ปิด Allow new users to sign up) ไม่อย่างนั้นใครสมัครได้ก็แก้สินค้าได้</li><li>ไม่บีบไฟล์โมเดลให้อัตโนมัติ ต้องบีบด้วย gltf-transform ก่อนอัปโหลด และระบบไม่ตรวจทิศหรือสัดส่วนของโมเดล</li></ul>
+<h3 id="10-รายงานความนิยมสินค้า-adminreport">10. รายงานความนิยมสินค้า (<code>/admin/report</code>)</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>view <code>product_popularity</code> นับจำนวนครั้งที่สินค้าแต่ละชิ้นถูกวางในห้องที่บันทึก แสดงเป็นกราฟแท่ง (recharts) และตาราง</li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>นับเฉพาะห้องที่กดบันทึก ไม่นับการเปิดดูหรือการดู AR ไม่มีตัวกรองช่วงเวลา</li><li>ห้องที่สร้างจาก E2E test ถูกนับรวมด้วย ตัวเลขจึงสูงกว่าการใช้งานจริง</li></ul>
+<h3 id="11-แบบประเมินผู้ใช้และผู้เชี่ยวชาญ-วัตถุประสงค์-21-และ-23">11. แบบประเมินผู้ใช้และผู้เชี่ยวชาญ (วัตถุประสงค์ 2.1 และ 2.3)</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>มาตราส่วนประมาณค่า 5 ระดับ คำถามทั้งสองชุดกำหนดไว้ที่ <code>src/lib/survey.js</code> และใช้ส่วนแสดงผลร่วมกัน</li><li>สรุปผลด้วยค่าเฉลี่ย (x̄) และส่วนเบี่ยงเบนมาตรฐานของกลุ่มตัวอย่าง (S.D. หารด้วย n − 1) รายข้อ รายด้าน และภาพรวม แปลความหมายด้วยเกณฑ์ช่วงค่าเฉลี่ย (4.51–5.00, 3.51–4.50, …) ส่งออก CSV แบบ UTF-8 BOM ให้เปิดใน Excel เป็นภาษาไทยได้</li><li>ใครก็ส่งแบบประเมินได้โดยไม่ต้องล็อกอิน แต่อ่านผลได้เฉพาะแอดมิน (RLS)</li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>ไม่ระบุตัวตนและไม่กันการส่งซ้ำ คนเดียวส่งหลายครั้งได้</li><li>แก้จำนวนข้อคำถามแล้วต้องแก้ check ใน <code>supabase/schema.sql</code> ด้วย และคำตอบเก่าที่จำนวนข้อไม่ตรงจะไม่ถูกนับ</li></ul>
+<h3 id="12-การสร้างโมเดล-3d-ของทีมเอง-scriptsmake-bowlmjs">12. การสร้างโมเดล 3D ของทีมเอง (<code>scripts/make-bowl.mjs</code>)</h3>
+<p><strong>เทคนิค</strong></p>
+<ul><li>สร้างโมเดลด้วยโค้ด three.js จากรูปถ่ายและขนาดที่วัดจริง: ตัวชามหมุนเส้นขอบด้านข้างรอบแกน (<code>LatheGeometry</code>) หูจับใช้ <code>TorusGeometry</code> แล้ว export เป็น <code>.glb</code> ด้วย <code>GLTFExporter</code> ผ่านเบราว์เซอร์ (vite + Playwright)</li><li>ลายบนผิว: คลี่ภาพจากรูปถ่ายผิวโค้งให้แบน (ชดเชยมุมกล้องและความโค้ง) ตัดพื้นหลังออก แล้วแปะเป็นแผ่นลายโปร่งใสห่อตามผิวชาม</li></ul>
+<p><strong>ข้อจำกัด</strong></p>
+<ul><li>เหมาะกับของทรงเรียบหรือทรงกลมสมมาตร ของทรงซับซ้อน เช่น โซฟาหรือเก้าอี้บุนวม ต้องใช้การสแกน 3D หรือ AI แปลงรูปเป็น 3D แทน</li><li>แสงและเงาจากรูปถ่ายติดมากับลาย ลายที่เป็นเครื่องหมายการค้าใช้ได้เฉพาะทดลองภายใน</li></ul>
+<h3 id="ข้อจำกัดของระบบโดยรวม">ข้อจำกัดของระบบโดยรวม</h3>
+<ul><li><strong>ใช้บริการแผนฟรีทั้งหมด:</strong> Supabase จะพักโปรเจกต์ถ้าไม่มีการใช้งาน 7 วัน, Storage 1 GB, Vercel Hobby</li><li><strong>ต้องใช้อินเทอร์เน็ตตลอด:</strong> ไม่มีโหมดออฟไลน์ ฟอนต์โหลดจาก Google Fonts</li><li><strong>ไลบรารี 3D ขนาดใหญ่:</strong> three.js และ model-viewer รวมหลายร้อย KB หน้าจัดห้องจึงโหลดครั้งแรกช้ากว่าหน้าอื่น</li><li><strong>ข้อความหน้าเว็บเป็นภาษาไทยอย่างเดียว:</strong> ตัวอักษรเล็กสุด 16px รองรับจอกว้างตั้งแต่ 360px</li><li><strong>E2E test ใช้ฐานข้อมูลจริง:</strong> smoke test สร้างห้องจริงทุกครั้งที่รัน (แบบประเมินดักคำขอไว้ ไม่บันทึกจริง)</li></ul>
+<h2 id="การติดตั้ง">การติดตั้ง</h2>
+<h3 id="สิ่งที่ต้องมี">สิ่งที่ต้องมี</h3>
+<ul><li><a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a> เวอร์ชัน 20 ขึ้นไป (แนะนำ 24)</li><li>Git</li><li>บัญชี <a href="https://supabase.com" target="_blank" rel="noopener">Supabase</a> (ฟรี)</li><li>บัญชี GitHub และ <a href="https://vercel.com" target="_blank" rel="noopener">Vercel</a> ถ้าจะนำขึ้นออนไลน์</li></ul>
+<h3 id="1-ดาวน์โหลดโปรเจกต์">1. ดาวน์โหลดโปรเจกต์</h3>
+<pre><code class="language-bash">git clone &lt;URL ของ repository&gt;
+cd project
+npm install</code></pre>
+<h3 id="2-สร้างฐานข้อมูลบน-supabase">2. สร้างฐานข้อมูลบน Supabase</h3>
+<ol><li>สร้างโปรเจกต์ใหม่ (แผน Free, Region: Southeast Asia (Singapore))</li><li>เมนู <strong>SQL Editor</strong> → วางทั้งไฟล์ <a href="supabase/schema.sql"><code>supabase/schema.sql</code></a> → <strong>Run</strong><br />สร้างตาราง view function สิทธิ์ (RLS) และ Storage bucket <code>models</code> ให้ครบ รันซ้ำได้ไม่เสียหาย</li><li>SQL Editor → วาง <a href="supabase/seed.sql"><code>supabase/seed.sql</code></a> → <strong>Run</strong> (สินค้าตัวอย่าง 5 ชิ้น)</li><li><strong>Authentication → Users → Add user</strong> สร้างบัญชีแอดมิน</li></ol>
+<h3 id="3-ตั้งค่าการเชื่อมต่อ">3. ตั้งค่าการเชื่อมต่อ</h3>
+<pre><code class="language-bash">cp .env.example .env.local</code></pre>
+<p>เปิด <code>.env.local</code> แล้วใส่ค่า</p>
+<div class="table-wrap"><table>
+<thead><tr><th>ตัวแปร</th><th>เอามาจาก</th></tr></thead>
+<tbody>
+<tr><td><code>VITE_SUPABASE_URL</code></td><td>Project URL (<code>https://&lt;project-id&gt;.supabase.co</code>) ปุ่ม <strong>Connect</strong> หรือ Project Settings → Data API</td></tr>
+<tr><td><code>VITE_SUPABASE_ANON_KEY</code></td><td><strong>Publishable key</strong> (<code>sb_publishable_...</code>) ใน Project Settings → API Keys</td></tr>
+<tr><td><code>ADMIN_EMAIL</code>, <code>ADMIN_PASSWORD</code></td><td>ไม่บังคับ ใช้เฉพาะตอนรัน E2E test ส่วนแอดมิน</td></tr>
+</tbody></table></div>
+<blockquote><p>⚠️ ห้ามใช้ Secret key (<code>sb_secret_...</code>) หรือ service_role key ในหน้าเว็บเด็ดขาด และห้าม commit <code>.env.local</code></p></blockquote>
+<h3 id="4-อัปโหลดโมเดลและรูปตัวอย่าง">4. อัปโหลดโมเดลและรูปตัวอย่าง</h3>
+<p>ไฟล์อยู่ใน <code>assets/samples/</code> อัปโหลดขึ้น Storage ด้วยสคริปต์ (ต้องใส่ <code>ADMIN_EMAIL</code> / <code>ADMIN_PASSWORD</code> ของบัญชีแอดมินจากข้อ 2.4 ใน <code>.env.local</code> ก่อน)</p>
+<pre><code class="language-bash">node --env-file=.env.local scripts/upload-samples.mjs</code></pre>
+<p>หรืออัปโหลดเองผ่าน Supabase → Storage → bucket <code>models</code> โดยวาง <code>.glb</code> ในโฟลเดอร์ <code>glb/</code> และรูปใน <code>thumbs/</code></p>
+<h3 id="5-เปิดใช้งาน">5. เปิดใช้งาน</h3>
+<pre><code class="language-bash">npm run dev</code></pre>
+<p>เปิด http://localhost:5173/catalog ต้องเห็นสินค้า 5 ชิ้น</p>
+<h3 id="6-เปิดใช้การค้นหาด้วยรูป">6. เปิดใช้การค้นหาด้วยรูป</h3>
+<p>ล็อกอินหน้า <code>/admin</code> → แผง <strong>AI ค้นหาด้วยรูป</strong> → กด <strong>สร้างข้อมูล AI</strong><br />
+ระบบจะโหลดโมเดล AI (ครั้งแรกราว 90 MB) แล้วแปลงรูปสินค้าทุกชิ้นเป็นข้อมูลสำหรับค้นหา ต้องกดซ้ำทุกครั้งที่เพิ่มสินค้าใหม่หรือเปลี่ยนรูปสินค้า</p>
+<h2 id="คำสั่งที่ใช้บ่อย">คำสั่งที่ใช้บ่อย</h2>
+<pre><code class="language-bash">npm run dev          # รันบนเครื่อง http://localhost:5173
+npm run build        # build สำหรับใช้งานจริง (โฟลเดอร์ dist/)
+npm run preview      # ดูผล build
+npx playwright test  # รัน E2E test
+python scripts/readme-to-html.py README.md README.html   # สร้าง README.html ใหม่หลังแก้ README.md</code></pre>
+<h2 id="การนำขึ้นออนไลน์-vercel">การนำขึ้นออนไลน์ (Vercel)</h2>
+<ol><li>Push โค้ดขึ้น GitHub</li><li>Vercel → <strong>Add New → Project</strong> → เลือก repository (Framework: Vite)</li><li><strong>Environment Variables</strong> ใส่ <code>VITE_SUPABASE_URL</code> และ <code>VITE_SUPABASE_ANON_KEY</code> ติ๊กทั้ง <strong>Production</strong> และ <strong>Preview</strong></li><li><strong>Settings → Deployment Protection</strong> ปิด Vercel Authentication เพื่อให้คนอื่นเปิดลิงก์ได้โดยไม่ต้องล็อกอิน</li><li><code>vercel.json</code> ตั้ง rewrite ทุก path ไป <code>/</code> ไว้แล้ว รีเฟรชหน้าไหนก็ไม่เจอ 404</li></ol>
+<blockquote><p>การทดสอบ AR บนมือถือต้องใช้ HTTPS (กล้องไม่ทำงานบน <code>http://</code>) ให้ทดสอบบนลิงก์ของ Vercel ไม่ใช่ localhost</p></blockquote>
+<h2 id="โครงสร้างโปรเจกต์">โครงสร้างโปรเจกต์</h2>
+<pre><code>src/
+  App.jsx                    เส้นทางของทุกหน้า
+  index.css                  ธีมและสไตล์หลัก
+  styles/home.css            สไตล์หน้าแรกและหน้าค้นหาด้วยรูป
+  components/
+    Layout.jsx               โครงหน้า + ส่วนท้าย
+    SiteHeader.jsx           เมนูหลัก (หน้าแรกวางทับภาพใหญ่)
+    ProductCard.jsx          การ์ดสินค้า (แคตตาล็อก + ผลค้นหาด้วยรูป)
+    TemplateModelBuilder.jsx เลือกแม่แบบ + ดูตัวอย่าง 3D ในฟอร์มเพิ่มสินค้า
+    ModelViewerDialog.jsx    หน้าต่างดูโมเดล 3D / ปุ่ม AR
+    3d/
+      RoomScene.jsx          ฉาก 3D (กล้อง แสง เงา)
+      Room.jsx               พื้น + ผนังตามขนาดห้อง + ตาราง 1 เมตร
+      Furniture.jsx          โหลด .glb แล้วบังคับขนาดจริง / กล่องแทนถ้าไม่มีโมเดล
+    planner/
+      RoomSizeForm.jsx       ฟอร์มขนาดห้อง
+      ProductPicker.jsx      รายการสินค้าสำหรับวาง
+      SelectedPanel.jsx      หมุน / ลบ / AR + ระยะห่างจากผนัง
+      RoomCheck.jsx          พื้นที่ห้อง พื้นที่ที่ใช้ และเตือนวางทับกัน
+      Bom.jsx                สรุปราคารวม
+      SaveRoom.jsx           บันทึกและลิงก์แชร์
+  lib/
+    supabase.js              สร้าง client จาก env
+    clip.js                  imageToEmbedding() AI ค้นหาด้วยรูป (โหลดเฉพาะเมื่อใช้)
+    templateCatalog.js       รายการแม่แบบและสีวัสดุ (ข้อมูลล้วน)
+    modelTemplates.js        สร้างโมเดลจากแม่แบบ + export .glb + เรนเดอร์รูปสินค้า
+    geometry.js              คำนวณตำแหน่ง ขอบห้อง การทับกัน ระยะห่างผนัง
+    format.js                แสดงราคา (บาท) และขนาด
+    products.js rooms.js     อ่าน/บันทึกข้อมูล
+    uploads.js               ตรวจและอัปโหลดไฟล์ (.glb ≤ 5 MB, รูป ≤ 2 MB)
+    survey.js                คำถามแบบประเมินผู้ใช้ (12 ข้อ) และผู้เชี่ยวชาญ (19 ข้อ) + คำนวณ x̄ / S.D.
+  store/roomStore.js         state ของห้อง (zustand)
+  pages/
+    Home.jsx Catalog.jsx VisualSearch.jsx RoomPlanner.jsx SharedRoom.jsx Survey.jsx ExpertReview.jsx
+    admin/  Login.jsx Products.jsx ProductForm.jsx AiIndexPanel.jsx Report.jsx
+            EvaluationReport.jsx (ใช้ร่วม) SurveyReport.jsx ExpertReport.jsx
+public/home/                 ภาพประกอบหน้าแรก (แบนเนอร์จาก Pexels, เรนเดอร์จากโมเดล CC0, ภาพหน้าจอระบบ)
+supabase/
+  schema.sql                 SQL ทั้งหมด (สร้างฐานข้อมูลใหม่ได้จากไฟล์เดียว)
+  seed.sql                   สินค้าตัวอย่าง
+assets/samples/              โมเดลและรูปตัวอย่าง (CC0)
+tests/                       Playwright E2E
+docs/                        คู่มือตั้งค่า และแหล่งที่มาของโมเดล</code></pre>
+<h2 id="ฐานข้อมูล">ฐานข้อมูล</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>ตาราง / ออบเจกต์</th><th>เก็บอะไร</th><th>สิทธิ์</th></tr></thead>
+<tbody>
+<tr><td><code>products</code></td><td>รหัส ชื่อ ราคา ขนาด (ซม.) path ของโมเดลและรูป และ <code>embedding</code> (CLIP 512 มิติ)</td><td>ทุกคนอ่าน, แอดมินเขียน</td></tr>
+<tr><td>function <code>match_products</code></td><td>คืนสินค้าที่รูปคล้ายที่สุด (cosine similarity ด้วย pgvector)</td><td>ทุกคนเรียกได้</td></tr>
+<tr><td><code>rooms</code></td><td>ห้องที่บันทึก (id ใช้เป็นลิงก์แชร์) ขนาดห้อง (ม.)</td><td>ทุกคนสร้างและอ่าน</td></tr>
+<tr><td><code>room_items</code></td><td>ตำแหน่ง x, z และมุมหมุนของเฟอร์นิเจอร์แต่ละชิ้น</td><td>ทุกคนสร้างและอ่าน</td></tr>
+<tr><td><code>survey_responses</code></td><td>คำตอบแบบประเมินความพึงพอใจ (เพศ ช่วงอายุ อุปกรณ์ คะแนน 12 ข้อ ข้อเสนอแนะ)</td><td>ทุกคนส่ง, แอดมินอ่าน</td></tr>
+<tr><td><code>expert_reviews</code></td><td>แบบประเมินผู้เชี่ยวชาญ (ชื่อ/ตำแหน่งไม่บังคับ คะแนน 19 ข้อ ข้อเสนอแนะ)</td><td>ทุกคนส่ง, แอดมินอ่าน</td></tr>
+<tr><td>view <code>product_popularity</code></td><td>จำนวนครั้งที่สินค้าแต่ละชิ้นถูกวางในห้อง</td><td>ตาม <code>products</code> / <code>room_items</code></td></tr>
+<tr><td>Storage <code>models</code></td><td>ไฟล์ <code>.glb</code> และรูปสินค้า</td><td>ทุกคนอ่าน, แอดมินอัปโหลด/ลบ</td></tr>
+</tbody></table></div>
+<p>ทุกการเปลี่ยนแปลงโครงสร้างฐานข้อมูลต้องแก้ใน <code>supabase/schema.sql</code> แล้วรันไฟล์นั้นซ้ำใน SQL Editor</p>
+<h2 id="การทดสอบ">การทดสอบ</h2>
+<pre><code class="language-bash">npx playwright install chromium   # ครั้งแรกครั้งเดียว
+npx playwright test               # build + รันทั้งหมดบนจอ desktop และจอ 360px
+BASE_URL=https://&lt;ลิงก์ staging&gt; npx playwright test   # ทดสอบกับเว็บที่ขึ้นออนไลน์แล้ว</code></pre>
+<p>ชุดทดสอบครอบคลุม: หน้าแรก, ขนาดของโมเดลจากแม่แบบทุกแบบ, เพิ่มสินค้าจากแม่แบบแล้ววางในห้อง, แคตตาล็อก, ค้นหาด้วยรูป (โหลดโมเดล AI จริง ต้องสร้างข้อมูล AI ในหน้าแอดมินก่อน), การจัดห้อง (smoke test: สร้างห้อง → วาง → ราคาถูก → บันทึก → เปิดลิงก์แชร์ได้ห้องเดิม), กันเฟอร์นิเจอร์หลุดนอกห้อง, ระยะห่างจากผนัง, แบบประเมิน, หน้าแอดมิน และสิทธิ์การแก้ไขผ่าน API</p>
+<blockquote><p>test ของแบบประเมินดักคำขอไว้ ไม่บันทึกคำตอบปลอมลงฐานข้อมูลจริง ส่วน smoke test ของการจัดห้องจะสร้างห้องจริง 1 ห้องทุกครั้งที่รัน</p></blockquote>
+<p>ก่อนเปิด Pull Request เข้า <code>staging</code> ต้อง <code>npm run build</code> ผ่านและ Playwright ผ่านทั้งหมด ถ้าแก้ส่วน 3D หรือ AR ให้ทดสอบบนมือถือจริง (Android Chrome + iPhone Safari) ด้วย</p>
+<h2 id="ปัญหาที่พบบ่อย">ปัญหาที่พบบ่อย</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>อาการ</th><th>วิธีแก้</th></tr></thead>
+<tbody>
+<tr><td>หน้าเว็บขึ้น "ยังไม่ได้ตั้งค่าการเชื่อมต่อฐานข้อมูล"</td><td>ยังไม่มี <code>.env.local</code> หรือใส่ค่าไม่ครบ แก้แล้วรัน <code>npm run dev</code> ใหม่ (บน Vercel ต้อง Redeploy)</td></tr>
+<tr><td>โหลดสินค้าไม่ได้ทั้งที่ตั้งค่าถูก</td><td>Supabase พักโปรเจกต์เมื่อไม่มีการใช้งาน 7 วัน เข้า Dashboard แล้วกด <strong>Restore</strong></td></tr>
+<tr><td>หน้าผลประเมินขึ้น "โหลดผลประเมินไม่สำเร็จ"</td><td>ยังไม่ได้รัน <code>supabase/schema.sql</code> เวอร์ชันล่าสุด (ตาราง <code>survey_responses</code> และ <code>expert_reviews</code>)</td></tr>
+<tr><td>ค้นหาด้วยรูปแล้วขึ้น "ยังไม่พบสินค้าที่คล้าย"</td><td>แอดมินยังไม่ได้กด "สร้างข้อมูล AI" ในหน้าจัดการสินค้า</td></tr>
+<tr><td>ผลค้นหาด้วยรูปไม่ตรง</td><td>ใช้รูปที่เห็นเฟอร์นิเจอร์ชิ้นเดียวชัดๆ รูปทั้งห้องที่มีหลายชิ้นจะได้ผลไม่แม่น</td></tr>
+<tr><td>ปุ่ม AR ไม่ขึ้น</td><td>ต้องเปิดบนมือถือผ่าน HTTPS และสินค้านั้นต้องมีไฟล์ <code>.glb</code></td></tr>
+<tr><td>อัปโหลดโมเดลไม่ได้</td><td>ไฟล์ต้องเป็น <code>.glb</code> ไม่เกิน 5 MB บีบไฟล์ด้วย <code>npx @gltf-transform/cli optimize in.glb out.glb --compress false --texture-compress webp --texture-size 1024</code> (ห้ามใช้ meshopt ดู <code>docs/model-credits.md</code>)</td></tr>
+<tr><td>รีเฟรชแล้วเจอ 404 บน Vercel</td><td>ตรวจว่ามี <code>vercel.json</code> ที่ rewrite ทุก path ไป <code>/</code></td></tr>
+</tbody></table></div>
+<h2 id="ผู้จัดทำ">ผู้จัดทำ</h2>
+<ol><li>นางสาวสุภาภรณ์ คงนาค</li><li>นางสาวอารีรัตน์ มงคลเกาะ</li><li>นางสาวปวีณ์นุช แก่นภักดี</li></ol>
+<p>ครูที่ปรึกษา: นายปฏิพัฒน์ พงศ์ศักดี<br />
+วิทยาลัยอาชีวศึกษานครปฐม สาขาเทคโนโลยีธุรกิจดิจิทัล</p>
+<p>โมเดล 3D ตัวอย่างจาก Poly Haven (CC0) รายละเอียดใน <a href="docs/model-credits.md"><code>docs/model-credits.md</code></a></p>
+    </article>
+  </main>
+</div>
+<button class="theme-btn" type="button" aria-label="สลับโหมดสว่าง/มืด">โหมดมืด</button>
+<script>
+  // สลับธีม (จำค่าในเครื่องผู้อ่าน)
+  const root = document.documentElement, btn = document.querySelector('.theme-btn')
+  const dark = () => root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+  const label = () => (btn.textContent = dark() ? 'โหมดสว่าง' : 'โหมดมืด')
+  try { const t = localStorage.getItem('readme-theme'); if (t) root.dataset.theme = t } catch {}
+  label()
+  btn.addEventListener('click', () => {
+    root.dataset.theme = dark() ? 'light' : 'dark'; label()
+    try { localStorage.setItem('readme-theme', root.dataset.theme) } catch {}
+  })
+  // ไฮไลต์หัวข้อที่กำลังอ่านในสารบัญ
+  const links = [...document.querySelectorAll('.toc a')]
+  const obs = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) {
+      links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id))
+    }
+  }, { rootMargin: '0px 0px -75% 0px' })
+  document.querySelectorAll('.doc h2[id]').forEach((h) => obs.observe(h))
+  // มือถือ: ปิดสารบัญหลังกดลิงก์
+  links.forEach((a) => a.addEventListener('click', () => { if (innerWidth <= 900) a.closest('details').open = false }))
+  if (innerWidth <= 900) document.querySelector('.toc details').open = false
+</script>
+</body>
+</html>

@@ -1,9 +1,10 @@
-import { Suspense } from 'react'
+import { Suspense, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Html, OrbitControls, useProgress } from '@react-three/drei'
 import Room from './Room.jsx'
 import Furniture from './Furniture.jsx'
 import { useRoomStore } from '../../store/roomStore.js'
+import { findOverlaps } from '../../lib/geometry.js'
 
 export default function RoomScene({ readOnly = false }) {
   const room = useRoomStore((s) => s.room)
@@ -13,6 +14,7 @@ export default function RoomScene({ readOnly = false }) {
   const dragging = useRoomStore((s) => s.dragging)
 
   const span = Math.max(room.width, room.length)
+  const overlaps = useMemo(() => findOverlaps(items, products), [items, products])
 
   return (
     <div
@@ -22,7 +24,7 @@ export default function RoomScene({ readOnly = false }) {
       data-items={JSON.stringify(items.map((it) => ({ sku: products[it.productId]?.sku, x: it.x, z: it.z, r: it.rotationY })))}
     >
       <Canvas shadows dpr={[1, 2]} camera={{ position: [span * 0.9, span * 1.1, span * 1.3], fov: 45 }}>
-        <color attach="background" args={['#e9e6df']} />
+        <color attach="background" args={['#efe8de']} />
         <hemisphereLight args={['#ffffff', '#b8a98f', 1.4]} />
         <ambientLight intensity={0.35} />
         <directionalLight
@@ -40,10 +42,16 @@ export default function RoomScene({ readOnly = false }) {
 
         {items.map((item) => {
           const product = products[item.productId]
-          if (!product?.model_path) return null
+          if (!product) return null
           return (
             <Suspense key={item.uid} fallback={<LoadingLabel x={item.x} z={item.z} />}>
-              <Furniture item={item} product={product} selected={item.uid === selectedUid} readOnly={readOnly} />
+              <Furniture
+                item={item}
+                product={product}
+                selected={item.uid === selectedUid}
+                overlapping={overlaps.has(item.uid)}
+                readOnly={readOnly}
+              />
             </Suspense>
           )
         })}

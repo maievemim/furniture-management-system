@@ -1,19 +1,30 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
+import SiteHeader, { SITE_NAME } from './SiteHeader.jsx'
 
 export default function Layout() {
+  const { pathname } = useLocation()
+  const isHome = pathname === '/'
+
   return (
-    <div className="app">
-      <header className="topbar">
-        <NavLink to="/" className="brand">เรืองศิลป์เฟอร์นิแลนด์</NavLink>
-        <nav className="nav">
-          <NavLink to="/" end data-testid="nav-catalog">แคตตาล็อก</NavLink>
-          <NavLink to="/planner" data-testid="nav-planner">จัดห้อง 3D</NavLink>
-          <NavLink to="/admin" className="nav-admin" data-testid="nav-admin">ผู้ดูแล</NavLink>
-        </nav>
-      </header>
-      <main className="main">
+    <div className={`app${isHome ? ' app-home' : ''}`}>
+      {/* หน้าแรกวางเมนูไว้บนภาพใหญ่เอง */}
+      {!isHome && <SiteHeader />}
+      <main className={isHome ? 'main-home' : 'main'}>
         <Outlet />
       </main>
+      <footer className="footer">
+        <div className="footer-inner">
+          <div>
+            <strong className="footer-brand">{SITE_NAME}</strong>
+            <p className="small">Web-based Virtual Furniture Placement Management System</p>
+          </div>
+          <p className="small footer-meta">
+            โครงงาน ปวช.3/3 ธด. วิทยาลัยอาชีวศึกษานครปฐม
+            <br />
+            สำหรับ บริษัท เรืองศิลป์เฟอร์นิแลนด์ จำกัด
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }
