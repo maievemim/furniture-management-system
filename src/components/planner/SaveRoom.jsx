@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useRoomStore } from '../../store/roomStore.js'
 import { saveRoom, shareUrl } from '../../lib/rooms.js'
 
-export default function SaveRoom() {
+export default function SaveRoom({ step }) {
   const room = useRoomStore((s) => s.room)
   const items = useRoomStore((s) => s.items)
   const savedRoomId = useRoomStore((s) => s.savedRoomId)
@@ -37,7 +37,10 @@ export default function SaveRoom() {
 
   return (
     <div className="panel" data-testid="save-panel">
-      <h2 className="panel-title">บันทึกและแชร์ห้อง</h2>
+      <h2 className="panel-title">
+        {step && <span className="step">{step}</span>}
+        บันทึกและแชร์ห้อง
+      </h2>
       <button
         type="button"
         className="btn btn-block"

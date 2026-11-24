@@ -25,3 +25,17 @@ npx @gltf-transform/cli optimize input.gltf output.glb --compress false --textur
 ```
 
 แหล่งโมเดลฟรีอื่นๆ: Kenney Furniture Kit (CC0), Sketchfab (กรอง Downloadable + CC-BY/CC0)
+
+## ภาพประกอบหน้าแรก (`public/home/`)
+
+`hero-room.jpg` ภาพแบนเนอร์หน้าแรก จาก Pexels "Interior Design of Living Room" https://www.pexels.com/photo/interior-design-of-living-room-20285350/
+ใช้ภายใต้ Pexels License (ใช้ฟรี แก้ไขได้ ไม่บังคับให้ระบุที่มา) https://www.pexels.com/license/
+`ar-room.jpg` เรนเดอร์ด้วย three.js จากโมเดลตัวอย่างข้างบน (CC0)
+`planner.jpg` เป็นภาพหน้าจอของหน้าจัดห้อง 3D ในระบบนี้เอง ไม่มีภาพจากแหล่งอื่น
+
+## โมเดลที่ทีมสร้างเอง (`assets/custom/`)
+
+| SKU | ชื่อ | ขนาด ก×ล×ส (ซม.) | วิธีสร้าง |
+| --- | --- | --- | --- |
+| BW-001 | ชามซุปเซรามิก 2 หู | 18 × 14 × 8 | ทีมผู้จัดทำสร้างด้วยโค้ด three.js จากรูปถ่ายและขนาดที่วัดจากของจริง (`scripts/make-bowl.mjs`) ไม่ใส่ลวดลายหรือโลโก้ของแบรนด์ |
+| BW-001 (มีลาย) | ชามซุปเซรามิก 2 หู ลายหมี | 18 × 14 × 8 | โมเดลเดียวกัน + ลายที่คลี่จากรูปถ่ายของทีม (`assets/custom/decals/`) ไฟล์ `bw-001-decal.glb` **ลายเป็นเครื่องหมายการค้าของ Bear Brand / Nestlé ใช้ทดลองภายในเท่านั้น ไม่ขึ้นเว็บสาธารณะ** |

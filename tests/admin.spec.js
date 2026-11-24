@@ -18,6 +18,8 @@ function adminCreds() {
 const creds = adminCreds()
 
 async function login(page) {
+  // หน้าจัดการสินค้าสร้างข้อมูล AI อัตโนมัติ: บล็อกการดาวน์โหลดโมเดล AI ในเทสแอดมิน (ทดสอบ AI แยกใน search.spec.js)
+  await page.route(/huggingface\.co|\.hf\.co/, (route) => route.abort())
   await page.goto('/admin')
   await page.getByTestId('login-email').fill(creds.email)
   await page.getByTestId('login-password').fill(creds.password)
@@ -91,6 +93,82 @@ test.describe('หลังล็อกอิน', () => {
     await row.getByRole('button', { name: 'ลบ' }).click()
     await expect(page.getByTestId('admin-notice')).toHaveText(`ลบ ${sku} แล้ว`)
     await expect(row).toHaveCount(0)
+  })
+
+  test('เพิ่มสินค้าโดยไม่อัปโหลดโมเดล 3D ได้ และวางในห้องเป็นกล่องขนาดจริง', async ({ page }) => {
+    await login(page)
+    const sku = `N-${Date.now().toString(36).toUpperCase()}`
+    await page.getByTestId('add-product').click()
+    await page.getByTestId('pf-sku').fill(sku)
+    await page.getByTestId('pf-name').fill('สินค้าทดสอบไม่มีโมเดล')
+    await page.getByTestId('pf-price').fill('990')
+    await page.getByTestId('pf-width').fill('40')
+    await page.getByTestId('pf-depth').fill('40')
+    await page.getByTestId('pf-height').fill('45')
+    await page.getByTestId('pf-save').click()
+    await expect(page.getByTestId('admin-notice')).toHaveText('เพิ่มสินค้าแล้ว')
+    const row = page.getByTestId('admin-product-row').filter({ hasText: sku })
+    await expect(row.getByTestId('admin-model-status')).toContainText('ไม่มี')
+
+    // หน้าจัดห้องวางได้ และไม่มีปุ่ม AR
+    await page.goto('/planner')
+    await page.getByTestId(`add-${sku}`).click()
+    await expect(page.getByTestId('selected-name')).toHaveText('สินค้าทดสอบไม่มีโมเดล')
+    await expect(page.getByTestId('view-ar')).toHaveCount(0)
+    await expect(page.getByTestId('bom-total')).toHaveText('990 บาท')
+
+    await page.goto('/admin/products')
+    page.once('dialog', (d) => d.accept())
+    await page.getByTestId('admin-product-row').filter({ hasText: sku }).getByRole('button', { name: 'ลบ' }).click()
+    await expect(page.getByTestId('admin-notice')).toHaveText(`ลบ ${sku} แล้ว`)
+  })
+
+  test('เพิ่มสินค้าโดยสร้างโมเดล 3D จากแม่แบบ แล้ววางในห้องได้ และมีปุ่มดู AR', async ({ page }) => {
+    await login(page)
+    const sku = `TP-${Date.now().toString(36).toUpperCase()}`
+    await page.getByTestId('add-product').click()
+    await page.getByTestId('pf-sku').fill(sku)
+    await page.getByTestId('pf-name').fill('ชั้นวางทดสอบจากแม่แบบ')
+    await page.getByTestId('pf-price').fill('1590')
+    await page.getByText('สร้างจากแม่แบบ', { exact: true }).click()
+    await page.getByTestId('tpl-shelf').locator('..').click()
+    await page.getByTestId('tpl-sample').click() // 80 × 30 × 180 ซม.
+    await expect(page.getByTestId('pf-width')).toHaveValue('80')
+    await page.getByRole('button', { name: 'เพิ่มจำนวนชั้น' }).click()
+    await expect(page.getByTestId('tpl-opt-count')).toHaveText('6')
+    await expect(page.getByTestId('tpl-preview')).toHaveAttribute('data-ready', '1')
+    await page.getByTestId('pf-save').click()
+    await expect(page.getByTestId('admin-notice')).toHaveText('เพิ่มสินค้าแล้ว', { timeout: 30_000 })
+
+    const row = page.getByTestId('admin-product-row').filter({ hasText: sku })
+    await expect(row.getByTestId('admin-model-status')).toContainText('มีโมเดล')
+    await expect(row.locator('img.admin-thumb')).toBeVisible() // รูปสินค้าสร้างจากโมเดลให้อัตโนมัติ
+
+    await page.goto('/planner')
+    await page.getByTestId(`add-${sku}`).click()
+    await expect(page.getByTestId('selected-name')).toHaveText('ชั้นวางทดสอบจากแม่แบบ')
+    await expect(page.getByTestId('view-ar')).toBeVisible()
+    await expect(page.getByTestId('scene-loading')).toHaveCount(0, { timeout: 20_000 })
+
+    await page.goto('/admin/products')
+    page.once('dialog', (d) => d.accept())
+    await page.getByTestId('admin-product-row').filter({ hasText: sku }).getByRole('button', { name: 'ลบ' }).click()
+    await expect(page.getByTestId('admin-notice')).toHaveText(`ลบ ${sku} แล้ว`)
+  })
+
+  test('หน้าผลประเมินความพึงพอใจเปิดได้', async ({ page }) => {
+    await login(page)
+    await page.getByTestId('admin-nav-survey').click()
+    await expect(page.getByRole('heading', { name: 'ผลประเมินความพึงพอใจ' })).toBeVisible()
+    await expect(page.getByTestId('survey-count').or(page.getByRole('alert'))).toBeVisible()
+  })
+
+  test('หน้าผลประเมินผู้เชี่ยวชาญเปิดได้ และมีลิงก์ /expert ให้คัดลอก', async ({ page }) => {
+    await login(page)
+    await page.getByTestId('admin-nav-expert').click()
+    await expect(page.getByRole('heading', { name: 'ผลประเมินประสิทธิภาพโดยผู้เชี่ยวชาญ' })).toBeVisible()
+    await expect(page.getByTestId('expert-link').locator('input')).toHaveValue(/\/expert$/)
+    await expect(page.getByTestId('survey-count').or(page.getByRole('alert'))).toBeVisible()
   })
 
   test('หน้ารายงานแสดงสถิติ กราฟ และตาราง', async ({ page }) => {

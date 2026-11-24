@@ -62,12 +62,12 @@ export default function Report() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 24, bottom: 4, left: 8 }} barCategoryGap={10}>
                     <CartesianGrid horizontal={false} stroke="var(--grid)" />
-                    <XAxis type="number" allowDecimals={false} tick={{ fill: 'var(--muted)', fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <XAxis type="number" allowDecimals={false} tick={{ fill: 'var(--muted)', fontSize: 16 }} axisLine={false} tickLine={false} />
                     <YAxis
                       type="category"
                       dataKey="name"
-                      width={150}
-                      tick={{ fill: 'var(--text)', fontSize: 12 }}
+                      width={210}
+                      tick={{ fill: 'var(--text)', fontSize: 16 }}
                       axisLine={{ stroke: 'var(--border)' }}
                       tickLine={false}
                     />

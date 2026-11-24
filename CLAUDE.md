@@ -50,12 +50,13 @@ src/
   lib/clip.js              # imageToEmbedding() ใช้ทั้งหน้าแอดมินและหน้าลูกค้า
   store/roomStore.js       # zustand: ขนาดห้อง, รายการเฟอร์นิเจอร์, ชิ้นที่เลือก
   pages/
-    Catalog.jsx            # รายการสินค้า + ปุ่มดู AR
+    Home.jsx               # หน้าแรก: ภาพใหญ่ + 3 ฟีเจอร์พร้อมขั้นตอนใช้งาน
+    Catalog.jsx            # /catalog รายการสินค้า + ปุ่มดู AR
     RoomPlanner.jsx        # หน้าจัดห้อง 3D + BOM
     SharedRoom.jsx         # /room/:id
     VisualSearch.jsx       # ค้นหาสินค้าด้วยรูป (ฟีเจอร์เสริม)
     admin/Login.jsx
-    admin/Products.jsx     # CRUD + อัปโหลด .glb
+    admin/Products.jsx     # CRUD + อัปโหลด .glb หรือสร้างโมเดลจากแม่แบบ (lib/modelTemplates.js)
     admin/Report.jsx       # กราฟความนิยม
   components/3d/
     Room.jsx               # พื้น + ผนังตามขนาดห้อง
@@ -136,6 +137,7 @@ VITE_SUPABASE_ANON_KEY=
 - โหลดโมเดลด้วย `useGLTF` ภายใต้ `<Suspense>` และแสดงสถานะ "กำลังโหลด..." เสมอ
 - โมเดล CLIP โหลดช้าครั้งแรก ต้องมีข้อความ "กำลังโหลด AI..." และโหลดเฉพาะตอนผู้ใช้เปิดหน้าค้นหาด้วยรูป
 - ทุกหน้าต้องใช้งานได้บนจอมือถือกว้าง 360px
+- **ตัวอักษรต้องไม่เล็กกว่า 16px (1rem)** ตามที่อาจารย์กำหนด ห้ามใช้ `font-size` ต่ำกว่า 1rem รวมถึง `fontSize` ของกราฟ (มี test `tests/font-size.spec.js` ตรวจอยู่)
 
 ## ขอบเขต
 

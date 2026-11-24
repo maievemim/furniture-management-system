@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <title>สร้างโมเดลชาม BW-001</title>
+    <style>
+      html, body { margin: 0; background: transparent; }
+      canvas { display: block; }
+    </style>
+  </head>
+  <body>
+    <!-- เปิดผ่าน vite (scripts/make-bowl.mjs เปิดหน้านี้ให้อัตโนมัติ)
+         ?decal=1 ใส่ลาย · ?preview=มุม,มุมกด แสดงภาพตัวอย่างแทนการ export -->
+    <script type="module">
+      import * as THREE from 'three'
+      import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js'
+      import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+      import { buildBowl } from './build-bowl.js'
+
+      const q = new URLSearchParams(location.search)
+      const loader = new THREE.TextureLoader()
+      const load = (url) => loader.loadAsync(url)
+
+      const decals = q.get('decal')
+        ? { front: await load('/assets/custom/decals/bw-001-front.png'), back: await load('/assets/custom/decals/bw-001-back.png') }
+        : undefined
+      const scene = new THREE.Scene()
+      scene.add(buildBowl({ decals }))
+
+      if (q.get('preview')) {
+        const [az, el] = q.get('preview').split(',').map(Number)
+        const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })
+        r.setPixelRatio(2)
+        r.setSize(innerWidth, innerHeight)
+        r.toneMapping = THREE.ACESFilmicToneMapping
+        r.setClearColor(0x000000, 0)
+        document.body.appendChild(r.domElement)
+        scene.environment = new THREE.PMREMGenerator(r).fromScene(new RoomEnvironment(), 0.04).texture
+        const sun = new THREE.DirectionalLight(0xffffff, 1.4)
+        sun.position.set(0.3, 0.6, 0.4)
+        scene.add(sun)
+        const cam = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.01, 10)
+        const d = 0.42
+        const a = THREE.MathUtils.degToRad(az)
+        const e = THREE.MathUtils.degToRad(el)
+        cam.position.set(d * Math.sin(a) * Math.cos(e), 0.04 + d * Math.sin(e), d * Math.cos(a) * Math.cos(e))
+        cam.lookAt(0, 0.035, 0)
+        r.render(scene, cam)
+        document.body.dataset.ready = '1'
+      } else {
+        const glb = await new GLTFExporter().parseAsync(scene, { binary: true })
+        const bytes = new Uint8Array(glb)
+        let bin = ''
+        for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+        window.glbBase64 = btoa(bin)
+        document.body.dataset.ready = '1'
+      }
+    </script>
+  </body>
+</html>

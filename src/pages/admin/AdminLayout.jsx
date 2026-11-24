@@ -16,6 +16,8 @@ export default function AdminLayout() {
         <nav className="subnav">
           <NavLink to="/admin/products" data-testid="admin-nav-products">จัดการสินค้า</NavLink>
           <NavLink to="/admin/report" data-testid="admin-nav-report">รายงานความนิยม</NavLink>
+          <NavLink to="/admin/survey" data-testid="admin-nav-survey">ผลประเมินความพึงพอใจ</NavLink>
+          <NavLink to="/admin/expert" data-testid="admin-nav-expert">ผลประเมินผู้เชี่ยวชาญ</NavLink>
         </nav>
         <div className="admin-user">
           <span className="muted small">{session.user.email}</span>

@@ -1,21 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { supabase, isSupabaseConfigured, publicModelUrl } from '../lib/supabase.js'
-import { formatBaht, formatDimensions } from '../lib/format.js'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { isSupabaseConfigured } from '../lib/supabase.js'
+import { fetchProducts } from '../lib/products.js'
 import ModelViewerDialog from '../components/ModelViewerDialog.jsx'
-import { useRoomStore } from '../store/roomStore.js'
+import ProductCard from '../components/ProductCard.jsx'
 
+// /catalog รายการสินค้าทั้งหมด + ปุ่มดู 3D / AR และวางในห้อง
 export default function Catalog() {
-  const navigate = useNavigate()
-  const setStoreProducts = useRoomStore((s) => s.setProducts)
-  const addItem = useRoomStore((s) => s.addItem)
-
-  function placeInRoom(product) {
-    setStoreProducts([product])
-    addItem(product.id)
-    navigate('/planner')
-  }
-
   const [products, setProducts] = useState([])
   const [viewing, setViewing] = useState(null) // สินค้าที่เปิดดูแบบ 3D
   const [status, setStatus] = useState('loading') // loading | ready | error
@@ -23,23 +14,12 @@ export default function Catalog() {
   const [query, setQuery] = useState('')
 
   async function loadProducts() {
-    if (!isSupabaseConfigured) {
-      setStatus('error')
-      setErrorMessage('ยังไม่ได้ตั้งค่าการเชื่อมต่อฐานข้อมูล (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)')
-      return
-    }
     setStatus('loading')
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, sku, name, price, width_cm, depth_cm, height_cm, model_path, thumbnail_url')
-        .order('name')
-      if (error) throw error
-      setProducts(data ?? [])
+      setProducts(await fetchProducts())
       setStatus('ready')
     } catch (err) {
-      console.error(err)
-      setErrorMessage('โหลดรายการสินค้าไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่อีกครั้ง')
+      setErrorMessage(err.message)
       setStatus('error')
     }
   }
@@ -51,15 +31,20 @@ export default function Catalog() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return products
-    return products.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q),
-    )
+    return products.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
   }, [products, query])
 
   return (
-    <section>
+    <section className="catalog">
       <div className="page-head">
-        <h1>แคตตาล็อกสินค้า</h1>
+        <div className="page-intro">
+          <p className="eyebrow">สินค้าของร้าน</p>
+          <h1>แคตตาล็อกสินค้า</h1>
+          <p className="muted">
+            ทุกชิ้นแสดงขนาดจริง กด "ดู 3D / AR" เพื่อส่องในห้องของคุณ หรือ{' '}
+            <Link to="/search">ค้นหาด้วยรูปภาพ</Link>
+          </p>
+        </div>
         <input
           type="search"
           className="search"
@@ -90,31 +75,7 @@ export default function Catalog() {
       {status === 'ready' && filtered.length > 0 && (
         <ul className="grid" data-testid="product-list">
           {filtered.map((p) => (
-            <li key={p.id} className="card" data-testid="product-card">
-              <div className="thumb">
-                {p.thumbnail_url ? (
-                  <img src={publicModelUrl(p.thumbnail_url)} alt={p.name} loading="lazy" />
-                ) : (
-                  <span className="muted">ไม่มีรูป</span>
-                )}
-              </div>
-              <div className="card-body">
-                <span className="sku">{p.sku}</span>
-                <h2 className="name" data-testid="product-name">{p.name}</h2>
-                <p className="dims">ขนาด (ก×ล×ส) {formatDimensions(p)}</p>
-                <p className="price" data-testid="product-price">{formatBaht(p.price)}</p>
-                {p.model_path && (
-                  <div className="card-actions">
-                    <button type="button" className="btn btn-outline" onClick={() => setViewing(p)} data-testid="view-3d">
-                      ดู 3D / AR
-                    </button>
-                    <button type="button" className="btn" onClick={() => placeInRoom(p)} data-testid="place-in-room">
-                      วางในห้อง
-                    </button>
-                  </div>
-                )}
-              </div>
-            </li>
+            <ProductCard key={p.id} product={p} onView={setViewing} />
           ))}
         </ul>
       )}

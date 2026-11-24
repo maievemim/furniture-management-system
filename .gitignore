@@ -12,3 +12,11 @@ playwright-report
 /*.png
 /*.docx
 /*.pdf
+
+# รูปถ่ายอ้างอิงที่โฟลเดอร์หลัก (มีข้อมูลส่วนตัวในภาพ ไม่เอาขึ้น repo สาธารณะ)
+/*.jpg
+/*.jpeg
+
+# โมเดลชามที่มีลายเครื่องหมายการค้า Bear Brand / Nestlé ใช้ทดลองภายในเท่านั้น
+assets/custom/bw-001-decal.*
+assets/custom/decals/

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import RoomScene from '../components/3d/RoomScene.jsx'
 import Bom from '../components/planner/Bom.jsx'
+import RoomCheck from '../components/planner/RoomCheck.jsx'
 import { loadRoom } from '../lib/rooms.js'
 import { useRoomStore } from '../store/roomStore.js'
 
@@ -55,6 +56,7 @@ export default function SharedRoom() {
     <section>
       <div className="page-head">
         <div>
+          <p className="eyebrow">ห้องที่แชร์</p>
           <h1 data-testid="shared-name">{room.name}</h1>
           <p className="muted small" data-testid="room-caption">
             {room.width} × {room.length} ม. สูง {room.height} ม. · บันทึกเมื่อ {created}
@@ -66,7 +68,10 @@ export default function SharedRoom() {
       </div>
       <div className="shared-layout">
         <RoomScene readOnly />
-        <Bom />
+        <div className="planner-bottom">
+          <Bom />
+          <RoomCheck />
+        </div>
       </div>
     </section>
   )

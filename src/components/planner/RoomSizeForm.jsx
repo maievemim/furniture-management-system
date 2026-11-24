@@ -7,7 +7,7 @@ const FIELDS = [
   { key: 'height', label: 'สูง (ม.)' },
 ]
 
-export default function RoomSizeForm({ disabled = false }) {
+export default function RoomSizeForm({ disabled = false, step }) {
   const room = useRoomStore((s) => s.room)
   const setRoom = useRoomStore((s) => s.setRoom)
   const [draft, setDraft] = useState(() => toDraft(room))
@@ -33,7 +33,10 @@ export default function RoomSizeForm({ disabled = false }) {
 
   return (
     <form className="panel" onSubmit={submit} data-testid="room-form">
-      <h2 className="panel-title">ขนาดห้อง</h2>
+      <h2 className="panel-title">
+        {step && <span className="step">{step}</span>}
+        ขนาดห้อง
+      </h2>
       <label className="field">
         <span>ชื่อห้อง</span>
         <input
